@@ -5,9 +5,12 @@ use stft::{STFT, WindowType};
 
 fn main() {
     let reader = hound::WavReader::open("sample.wav").unwrap();
+    let reader_spec = reader.spec().clone();
     println!("channels: {}", reader.spec().channels);
-    let mut writer = hound::WavWriter::create("tmp/out.wav", reader.spec()).unwrap();
-    for sample in reader.into_samples() {
+    let mut out_spec = reader.spec().clone();
+    out_spec.channels = 1;
+    let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+    for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
         let sample: i32 = sample.unwrap();
         writer.write_sample(sample);
     }
