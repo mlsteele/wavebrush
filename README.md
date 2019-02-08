@@ -16,3 +16,5 @@ https://github.com/snd/stft
 https://siciarz.net/24-days-rust-hound/
 https://docs.rs/crate/rap/0.1.0/source/src/lib.rs
 http://www.music.helsinki.fi/tmt/opetus/uusmedia/esim/index-e.html
+https://dsp.stackexchange.com/questions/2757/inverse-short-time-fourier-transform-algorithm-described-in-words
+http://eeweb.poly.edu/iselesni/EL713/STFT/stft_inverse.pdf "Perfect Reconstruction Condition"

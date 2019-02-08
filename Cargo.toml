@@ -5,6 +5,6 @@ authors = ["Miles Steele <miles@milessteele.com>"]
 edition = "2018"
 
 [dependencies]
-stft = { git = "https://github.com/mlsteele/stft", rev = "0dff018" }
+stft = { git = "https://github.com/mlsteele/stft", rev = "f2bc4ba" }
 hound = "3.4.0"
 image = "0.21.0"
