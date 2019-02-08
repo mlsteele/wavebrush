@@ -11,14 +11,14 @@ fn main() {
 
     let window_type: WindowType = WindowType::Hanning;
     let window_size: usize = 1024;
-    let step_size: usize = 512;
+    let step_size: usize = window_size / 2;
     let mut stft = STFT::new(window_type, window_size, step_size);
     println!("stft output size: {:?}", stft.output_size());
 
     let mut spectrogram_column: Vec<f64> =
         std::iter::repeat(0.).take(stft.output_size()).collect();
 
-    let mut imgbuf = image::ImageBuffer::new(800, stft.output_size() as u32);
+    let mut imgbuf = image::ImageBuffer::new(4096, stft.output_size() as u32);
     let mut img_x = 0;
 
     let mut out_spec = reader.spec().clone();
