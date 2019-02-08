@@ -4,21 +4,36 @@ extern crate stft;
 use stft::{STFT, WindowType};
 
 fn main() {
-    let reader = hound::WavReader::open("sample.wav").unwrap();
+    let reader = hound::WavReader::open("mono.wav").unwrap();
     let reader_spec = reader.spec().clone();
-    println!("channels: {}", reader.spec().channels);
+    println!("spec: {:?}", reader_spec);
+
+    let window_type: WindowType = WindowType::Hanning;
+    let window_size: usize = 1024;
+    let step_size: usize = 512;
+    let mut stft = STFT::new(window_type, window_size, step_size);
+    println!("stft output size: {:?}", stft.output_size());
+
+    let mut spectrogram_column: Vec<f64> =
+        std::iter::repeat(0.).take(stft.output_size()).collect();
+
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
     let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+    // Scan one channel of the audio.
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
         let sample: i32 = sample.unwrap();
-        writer.write_sample(sample);
+        stft.append_samples(&[sample as f64]);
+        while stft.contains_enough_to_compute() {
+            stft.compute_column(&mut spectrogram_column[..]);
+            stft.move_to_next_column();
+        }
+        // writer.write_sample(sample);
     }
     writer.finalize().unwrap();
 }
 
 fn stft_example() {
-    // let's generate ten seconds of fake audio
     let sample_rate: usize = 44100;
     let seconds: usize = 10;
     let sample_count = sample_rate * seconds;
