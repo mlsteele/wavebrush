@@ -4,6 +4,11 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "hound"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "num"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,11 +112,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "wavebrush"
 version = "0.1.0"
 dependencies = [
+ "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "stft 0.2.0 (git+https://github.com/mlsteele/stft?rev=0dff018)",
 ]
 
 [metadata]
 "checksum apodize 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cb77a6c4e3d002c9092af8d2a5b5788f74dfd6972b4383533bb1f72ce8ee9317"
+"checksum hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8a164bb2ceaeff4f42542bdb847c41517c78a60f5649671b2a07312b6e117549"
 "checksum num 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cf4825417e1e1406b3782a8ce92f4d53f26ec055e3622e1881ca8e9f5f9e08db"
 "checksum num-bigint 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "57450397855d951f1a41305e54851b1a7b8f5d2e349543a02a2effe25459f718"
 "checksum num-complex 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "107b9be86cd2481930688277b675b0114578227f034674726605b8a482d8baf8"

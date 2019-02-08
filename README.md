@@ -15,3 +15,4 @@ https://en.wikipedia.org/wiki/Fast_Fourier_transform
 https://github.com/snd/stft
 https://siciarz.net/24-days-rust-hound/
 https://docs.rs/crate/rap/0.1.0/source/src/lib.rs
+http://www.music.helsinki.fi/tmt/opetus/uusmedia/esim/index-e.html

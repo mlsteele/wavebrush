@@ -1,7 +1,20 @@
+extern crate hound;
 extern crate stft;
+
 use stft::{STFT, WindowType};
 
 fn main() {
+    let reader = hound::WavReader::open("sample.wav").unwrap();
+    println!("channels: {}", reader.spec().channels);
+    let mut writer = hound::WavWriter::create("tmp/out.wav", reader.spec()).unwrap();
+    for sample in reader.into_samples() {
+        let sample: i32 = sample.unwrap();
+        writer.write_sample(sample);
+    }
+    writer.finalize().unwrap();
+}
+
+fn stft_example() {
     // let's generate ten seconds of fake audio
     let sample_rate: usize = 44100;
     let seconds: usize = 10;
@@ -35,6 +48,8 @@ fn main() {
             // computing the norm of the complex outputs and
             // taking the log10
             stft.compute_column(&mut spectrogram_column[..]);
+
+            println!("{:?}", spectrogram_column);
 
             // here's where you would do something with the
             // spectrogram_column...
