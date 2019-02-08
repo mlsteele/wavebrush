@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 stft = { git = "https://github.com/mlsteele/stft", rev = "0dff018" }
 hound = "3.4.0"
+image = "0.21.0"
