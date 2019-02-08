@@ -1,0 +1,8 @@
+[package]
+name = "wavebrush"
+version = "0.1.0"
+authors = ["Miles Steele <miles@milessteele.com>"]
+edition = "2018"
+
+[dependencies]
+stft = { git = "https://github.com/mlsteele/stft", rev = "0dff018" }
