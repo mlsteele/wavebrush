@@ -84,7 +84,7 @@ fn main() {
             stft.compute_complex_column(&mut buf[..]);
 
             if img_x < imgbuf.width() {
-                let morphed: Vec<_> = buf.iter().map(|v| log10_positive(v.norm())).collect();
+                let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
                 let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
                 let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
                 if img_x == 800 {
