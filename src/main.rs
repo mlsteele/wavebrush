@@ -1,6 +1,7 @@
 extern crate hound;
-extern crate stft;
 extern crate image;
+
+mod stft;
 
 use std::f64;
 use stft::{STFT, WindowType};
@@ -117,17 +118,16 @@ fn main() {
     println!("window_size: {:?}", window_size);
     println!("window_sec: {:?}", window_size as f64 / reader_spec.sample_rate as f64);
     println!("step_size: {:?}", step_size);
-    println!("stft output size: {:?}", stft.output_size());
 
-    let ifft = FFTplanner::<f64>::new(true).plan_fft(stft.output_size());
+    let ifft = FFTplanner::<f64>::new(true).plan_fft(window_size);
 
-    let mut buf: Vec<Complex<f64>>  = vec![Default::default(); stft.output_size()];
-    let mut buf2: Vec<Complex<f64>> = vec![Default::default(); stft.output_size()];
+    let mut buf: Vec<Complex<f64>>  = vec![Default::default(); window_size];
+    let mut buf2: Vec<Complex<f64>> = vec![Default::default(); window_size];
     let overlap_size = window_size - step_size;
     let mut buf_overlap: Vec<Complex<f64>> = vec![Default::default(); overlap_size];
 
-    let mut imgbuf = image::ImageBuffer::new(512, stft.output_size() as u32);
-    // let mut imgbuf = image::DynamicImage::new_rgb8(1028, stft.output_size() as u32);
+    let mut imgbuf = image::ImageBuffer::new(512, window_size as u32);
+    // let mut imgbuf = image::DynamicImage::new_rgb8(1028, window_size as u32);
     let mut img_x = 0;
 
     // Scan one channel of the audio.
@@ -137,7 +137,8 @@ fn main() {
 
         stft.append_samples(&[sample_f64]);
         while stft.contains_enough_to_compute() {
-            stft.compute_complex_column(&mut buf[..]);
+            stft.compute_into_complex_output();
+            buf.copy_from_slice(&stft.complex_output);
             // let buf_len = buf.len();
             // for sample in buf.iter_mut() {
             //     *sample /= buf_len as f64;
