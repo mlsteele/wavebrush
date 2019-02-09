@@ -3,9 +3,10 @@ extern crate stft;
 extern crate image;
 
 use std::f64;
-use stft::{STFT, WindowType, log10_positive};
+use stft::{STFT, WindowType};
 // use rustfft::{FFTplanner};
 use num::complex::Complex;
+use image::{DynamicImage};
 
 trait SampleConvert<X,Y> {
     fn convert(x: X) -> Y;
@@ -49,7 +50,7 @@ fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 
 }
 
 fn main() {
-    let reader = hound::WavReader::open("mono.wav").unwrap();
+    let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -59,8 +60,10 @@ fn main() {
     let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
 
     let window_type: WindowType = WindowType::Hanning;
-    let window_size: usize = 1024;
+    let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
+    // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
+    println!("window_size: {:?}", window_size);
     let step_size: usize = window_size / 2;
     let mut stft = STFT::new(window_type, window_size, step_size);
     println!("stft output size: {:?}", stft.output_size());
@@ -71,7 +74,8 @@ fn main() {
     // let mut buf2: Vec<Complex<f64>> = vec![Default::default(); stft.output_size()];
     // let mut buf_carryover: Vec<f64> = vec![Default::default(); window_size - step_size];
 
-    let mut imgbuf = image::ImageBuffer::new(4096, stft.output_size() as u32);
+    let mut imgbuf = image::ImageBuffer::new(1028, stft.output_size() as u32);
+    // let mut imgbuf = image::DynamicImage::new_rgb8(1028, stft.output_size() as u32);
     let mut img_x = 0;
 
     // Scan one channel of the audio.
@@ -84,22 +88,25 @@ fn main() {
             stft.compute_complex_column(&mut buf[..]);
 
             if img_x < imgbuf.width() {
-                let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
+                // let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
+                let morphed: Vec<_> = buf.iter().map(|v| (v.norm() + 0.).log10())
+                    .map(|v| if v > 0. {v} else {0.}).collect();
                 let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
                 let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
-                if img_x == 800 {
+                // if img_x == 800 {
                     println!("{:?} -> {:?}", min, max);
-                }
+                // }
                 for (i, &v) in morphed.iter().enumerate() {
-                    let sv = rescale(v, min, max, 0., 255.);
-                    let pixel = imgbuf.get_pixel_mut(img_x, i as u32);
-                    if img_x == 800 {
-                        println!("{:?}", sv);
-                    }
+                    let sv = rescale(v, min, max, 0., 1.);
+                    // let sv = rescale(v, 0., 2., 0., 1.);
+                    let pixel = imgbuf.get_pixel_mut(img_x, imgbuf.height()-1-i as u32);
+                    // if img_x == 800 {
+                    //     println!("{:?}", sv);
+                    // }
                     *pixel = image::Rgb([
-                        (sv) as u8,
-                        (sv) as u8,
-                        (sv) as u8,
+                        rescale(sv, 0., 1., 0., 245.) as u8 + 10,
+                        rescale(sv, 0., 1., 0., 190.) as u8,
+                        rescale(sv, 0., 1., 0., 80.) as u8 + 20,
                     ]);
                 }
             }
@@ -113,6 +120,10 @@ fn main() {
             img_x += 1;
         }
     }
-    imgbuf.save("tmp/out.png").unwrap();
+    // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
+    let w = imgbuf.width();
+    let h = imgbuf.height();
+    let factor = 3;
+    DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
 }
