@@ -50,7 +50,7 @@ fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 
 }
 
 fn main() {
-    let reader = hound::WavReader::open("speech.wav").unwrap();
+    let reader = hound::WavReader::open("shortspeech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -63,9 +63,11 @@ fn main() {
     let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
-    println!("window_size: {:?}", window_size);
-    let step_size: usize = window_size / 2;
+    // let step_size: usize = window_size / 2;
+    let step_size: usize = 32;
     let mut stft = STFT::new(window_type, window_size, step_size);
+    println!("window_size: {:?}", window_size);
+    println!("step_size: {:?}", step_size);
     println!("stft output size: {:?}", stft.output_size());
 
     // let ifft = FFTplanner::<f64>::new(true).plan_fft(stft.output_size());
@@ -123,7 +125,7 @@ fn main() {
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
     let w = imgbuf.width();
     let h = imgbuf.height();
-    let factor = 3;
+    let factor = 1;
     DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
 }
