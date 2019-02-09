@@ -4,7 +4,7 @@ extern crate image;
 
 use std::f64;
 use stft::{STFT, WindowType};
-// use rustfft::{FFTplanner};
+use rustfft::{FFTplanner};
 use num::complex::Complex;
 use image::{DynamicImage};
 
@@ -50,6 +50,47 @@ fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 
 }
 
 fn main() {
+    let reader = hound::WavReader::open("mono.wav").unwrap();
+    let reader_spec = reader.spec().clone();
+    println!("spec: {:?}", reader_spec);
+    assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
+
+    let mut out_spec = reader.spec().clone();
+    out_spec.channels = 1;
+    let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+
+    let mut buf: Vec<Complex<f64>> = Vec::new();
+
+    // Read the whole wav
+    for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
+        let sample: i16 = sample.unwrap();
+        let sample_f64: f64 = SampleConvertImpl::convert(sample);
+        buf.push(Complex::new(sample_f64, 0.));
+    }
+    println!("buf len: {:?}", buf.len());
+
+    // Zero pad (but why?)
+    // buf.extend(vec![Complex::default(); buf.len()]);
+
+    let mut buf2: Vec<Complex<f64>> = vec![Default::default(); buf.len()];
+
+    let fft = FFTplanner::<f64>::new(false).plan_fft(buf.len());
+    let ifft = FFTplanner::<f64>::new(true).plan_fft(buf.len());
+
+    fft.process(&mut buf, &mut buf2);
+    // for sample in &buf2 {
+    //     println!("{:?}", sample.norm());
+    // }
+    ifft.process(&mut buf2, &mut buf);
+
+    for sample in &buf {
+        // println!("{:?}", sample);
+        writer.write_sample(SampleConvertImpl::convert(sample.re / 2000000.)).unwrap();
+    };
+    writer.finalize().unwrap();
+}
+
+fn main2() {
     let reader = hound::WavReader::open("shortspeech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
