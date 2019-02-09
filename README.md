@@ -23,3 +23,6 @@ Painting on spectrograms.
 - https://en.wikipedia.org/wiki/Overlap%E2%80%93add_method
 - http://hypermammut.sourceforge.net/paulstretch/ cool!
 - https://dsp.stackexchange.com/questions/32363/is-it-possible-to-apply-inverse-fourier-transform-i-fft-to-the-following-image
+- https://www.mathworks.com/matlabcentral/answers/15770-scaling-the-fft-and-the-ifft (divide by N)
+- https://electronics.stackexchange.com/questions/25900/scaling-fft-output-by-number-of-points-in-fft
+- https://math.stackexchange.com/questions/166511/fft-with-a-real-matrix-why-storing-just-half-the-coefficients probably why stft outputs half sized

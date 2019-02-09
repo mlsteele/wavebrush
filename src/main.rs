@@ -49,7 +49,7 @@ fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 
     return ((v - in_min) / (in_max - in_min) * (out_max - out_min)) + out_min;
 }
 
-fn main() {
+fn main2() {
     let reader = hound::WavReader::open("mono.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
@@ -78,21 +78,24 @@ fn main() {
     let ifft = FFTplanner::<f64>::new(true).plan_fft(buf.len());
 
     fft.process(&mut buf, &mut buf2);
-    for sample in &mut buf2 {
-        // println!("{:?}", sample.norm());
-        sample.re *= sample.im;
-    }
+    // for sample in &mut buf2 {
+    //     println!("{:?}", sample.norm());
+    //     sample.re *= sample.im;
+    // }
+    // buf2.drain(..reader_spec.sample_rate as usize / 2);
+    // buf2.resize(buf.len(), Default::default());
+    // buf2.rotate_right(reader_spec.sample_rate as usize / 10);
     ifft.process(&mut buf2, &mut buf);
 
     for sample in &buf {
         // println!("{:?}", sample);
-        writer.write_sample(SampleConvertImpl::convert(sample.re / 2000000.)).unwrap();
+        writer.write_sample(SampleConvertImpl::convert(sample.re / buf.len() as f64)).unwrap();
     };
     writer.finalize().unwrap();
 }
 
-fn main2() {
-    let reader = hound::WavReader::open("shortspeech.wav").unwrap();
+fn main() {
+    let reader = hound::WavReader::open("mono.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -102,23 +105,28 @@ fn main2() {
     let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
 
     let window_type: WindowType = WindowType::Hanning;
-    let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
+    // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
-    // let step_size: usize = window_size / 2;
-    let step_size: usize = 32;
+    let step_size: usize = window_size / 2;
+    // let step_size: usize = 16;
+    // let step_size: usize = reader_spec.sample_rate as usize / 4;
+    // let step_size: usize = 32;
     let mut stft = STFT::new(window_type, window_size, step_size);
     println!("window_size: {:?}", window_size);
+    println!("window_sec: {:?}", window_size as f64 / reader_spec.sample_rate as f64);
     println!("step_size: {:?}", step_size);
     println!("stft output size: {:?}", stft.output_size());
 
-    // let ifft = FFTplanner::<f64>::new(true).plan_fft(stft.output_size());
+    let ifft = FFTplanner::<f64>::new(true).plan_fft(stft.output_size());
 
     let mut buf: Vec<Complex<f64>>  = vec![Default::default(); stft.output_size()];
-    // let mut buf2: Vec<Complex<f64>> = vec![Default::default(); stft.output_size()];
-    // let mut buf_carryover: Vec<f64> = vec![Default::default(); window_size - step_size];
+    let mut buf2: Vec<Complex<f64>> = vec![Default::default(); stft.output_size()];
+    let overlap_size = window_size - step_size;
+    let mut buf_overlap: Vec<Complex<f64>> = vec![Default::default(); overlap_size];
 
-    let mut imgbuf = image::ImageBuffer::new(1028, stft.output_size() as u32);
+    let mut imgbuf = image::ImageBuffer::new(512, stft.output_size() as u32);
     // let mut imgbuf = image::DynamicImage::new_rgb8(1028, stft.output_size() as u32);
     let mut img_x = 0;
 
@@ -130,6 +138,10 @@ fn main2() {
         stft.append_samples(&[sample_f64]);
         while stft.contains_enough_to_compute() {
             stft.compute_complex_column(&mut buf[..]);
+            // let buf_len = buf.len();
+            // for sample in buf.iter_mut() {
+            //     *sample /= buf_len as f64;
+            // }
 
             if img_x < imgbuf.width() {
                 // let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
@@ -138,7 +150,7 @@ fn main2() {
                 let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
                 let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
                 // if img_x == 800 {
-                    println!("{:?} -> {:?}", min, max);
+                //     println!("{:?} -> {:?}", min, max);
                 // }
                 for (i, &v) in morphed.iter().enumerate() {
                     let sv = rescale(v, min, max, 0., 1.);
@@ -155,10 +167,20 @@ fn main2() {
                 }
             }
 
-            // ifft.process(&mut buf, &mut buf2);
-            // for sample in &buf2 {
-            //     writer.write_sample(SampleConvertImpl::convert(sample.re)).unwrap();
-            // };
+            ifft.process(&mut buf, &mut buf2);
+            // overlap += buf2[..w-s];
+            for i in 0..window_size-step_size {
+                buf_overlap[i] += buf2[i];
+            }
+            // shipit(overlap);
+            for sample in &buf_overlap {
+                writer.write_sample(SampleConvertImpl::convert(sample.re / buf.len() as f64)).unwrap();
+            };
+            // overlap = buf2[w-s..];
+            println!("{:?}", buf2.len());
+            println!("{:?}", buf_overlap.len());
+            println!("{:?}", buf2[step_size..].len());
+            buf_overlap.copy_from_slice(&buf2[step_size..]);
 
             stft.move_to_next_column();
             img_x += 1;
@@ -167,7 +189,7 @@ fn main2() {
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
     let w = imgbuf.width();
     let h = imgbuf.height();
-    let factor = 1;
+    let factor = 2;
     DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
 }
