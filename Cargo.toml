@@ -8,3 +8,5 @@ edition = "2018"
 stft = { git = "https://github.com/mlsteele/stft", rev = "f2bc4ba" }
 hound = "3.4.0"
 image = "0.21.0"
+rustfft = "3.0.0"
+num = "0.2.0"

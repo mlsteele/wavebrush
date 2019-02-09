@@ -368,6 +368,8 @@ version = "0.1.0"
 dependencies = [
  "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustfft 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "stft 0.2.0 (git+https://github.com/mlsteele/stft?rev=f2bc4ba)",
 ]
 

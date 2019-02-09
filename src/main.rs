@@ -2,49 +2,116 @@ extern crate hound;
 extern crate stft;
 extern crate image;
 
-use stft::{STFT, WindowType};
+use std::f64;
+use stft::{STFT, WindowType, log10_positive};
+// use rustfft::{FFTplanner};
+use num::complex::Complex;
+
+trait SampleConvert<X,Y> {
+    fn convert(x: X) -> Y;
+}
+
+struct SampleConvertImpl {}
+
+impl SampleConvert<i32, f64> for SampleConvertImpl {
+    fn convert(x: i32) -> f64 {
+        match x as f64 / std::i32::MAX as f64 {
+            y if y > 1. => 1.,
+            y if y < -1. => -1.,
+            y => y,
+        }
+    }
+}
+
+impl SampleConvert<i16, f64> for SampleConvertImpl {
+    fn convert(x: i16) -> f64 {
+        match x as f64 / std::i16::MAX as f64 {
+            y if y > 1. => 1.,
+            y if y < -1. => -1.,
+            y => y,
+        }
+    }
+}
+
+impl SampleConvert<f64, i16> for SampleConvertImpl {
+    fn convert(x: f64) -> i16 {
+        let max = std::i16::MAX;
+        match (x * max as f64) as i16 {
+            y if y > max => max,
+            y if y < -max => -max,
+            y => y,
+        }
+    }
+}
+
+fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
+    return ((v - in_min) / (in_max - in_min) * (out_max - out_min)) + out_min;
+}
 
 fn main() {
     let reader = hound::WavReader::open("mono.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
-
-    let window_type: WindowType = WindowType::Hanning;
-    let window_size: usize = 1024;
-    let step_size: usize = window_size / 2;
-    let mut stft = STFT::new(window_type, window_size, step_size);
-    println!("stft output size: {:?}", stft.output_size());
-
-    let mut spectrogram_column: Vec<f64> =
-        std::iter::repeat(0.).take(stft.output_size()).collect();
-
-    let mut imgbuf = image::ImageBuffer::new(4096, stft.output_size() as u32);
-    let mut img_x = 0;
+    assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
 
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
     let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+
+    let window_type: WindowType = WindowType::Hanning;
+    let window_size: usize = 1024;
+    // let window_size: usize = reader_spec.sample_rate as usize / 100;
+    let step_size: usize = window_size / 2;
+    let mut stft = STFT::new(window_type, window_size, step_size);
+    println!("stft output size: {:?}", stft.output_size());
+
+    // let ifft = FFTplanner::<f64>::new(true).plan_fft(stft.output_size());
+
+    let mut buf: Vec<Complex<f64>>  = vec![Default::default(); stft.output_size()];
+    // let mut buf2: Vec<Complex<f64>> = vec![Default::default(); stft.output_size()];
+    // let mut buf_carryover: Vec<f64> = vec![Default::default(); window_size - step_size];
+
+    let mut imgbuf = image::ImageBuffer::new(4096, stft.output_size() as u32);
+    let mut img_x = 0;
+
     // Scan one channel of the audio.
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
-        let sample: i32 = sample.unwrap();
-        stft.append_samples(&[sample as f64]);
+        let sample: i16 = sample.unwrap();
+        let sample_f64: f64 = SampleConvertImpl::convert(sample);
+
+        stft.append_samples(&[sample_f64]);
         while stft.contains_enough_to_compute() {
-            if img_x >= imgbuf.width() {
-                break
+            stft.compute_complex_column(&mut buf[..]);
+
+            if img_x < imgbuf.width() {
+                let morphed: Vec<_> = buf.iter().map(|v| log10_positive(v.norm())).collect();
+                let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+                let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+                if img_x == 800 {
+                    println!("{:?} -> {:?}", min, max);
+                }
+                for (i, &v) in morphed.iter().enumerate() {
+                    let sv = rescale(v, min, max, 0., 255.);
+                    let pixel = imgbuf.get_pixel_mut(img_x, i as u32);
+                    if img_x == 800 {
+                        println!("{:?}", sv);
+                    }
+                    *pixel = image::Rgb([
+                        (sv) as u8,
+                        (sv) as u8,
+                        (sv) as u8,
+                    ]);
+                }
             }
-            stft.compute_column(&mut spectrogram_column[..]);
-            for (i, &sv) in spectrogram_column.iter().enumerate() {
-                let pixel = imgbuf.get_pixel_mut(img_x, i as u32);
-                *pixel = image::Rgb([
-                    (sv * 30.) as u8,
-                    (sv * 20.) as u8,
-                    (sv * 10.) as u8,
-                ]);
-            }
+
+            // ifft.process(&mut buf, &mut buf2);
+            // for sample in &buf2 {
+            //     writer.write_sample(SampleConvertImpl::convert(sample.re)).unwrap();
+            // };
+
             stft.move_to_next_column();
             img_x += 1;
         }
-        // writer.write_sample(sample);
     }
     imgbuf.save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
