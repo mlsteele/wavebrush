@@ -50,53 +50,12 @@ fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 
     return ((v - in_min) / (in_max - in_min) * (out_max - out_min)) + out_min;
 }
 
-fn main2() {
-    let reader = hound::WavReader::open("mono.wav").unwrap();
-    let reader_spec = reader.spec().clone();
-    println!("spec: {:?}", reader_spec);
-    assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
-
-    let mut out_spec = reader.spec().clone();
-    out_spec.channels = 1;
-    let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
-
-    let mut buf: Vec<Complex<f64>> = Vec::new();
-
-    // Read the whole wav
-    for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
-        let sample: i16 = sample.unwrap();
-        let sample_f64: f64 = SampleConvertImpl::convert(sample);
-        buf.push(Complex::new(sample_f64, 0.));
-    }
-    println!("buf len: {:?}", buf.len());
-
-    // Zero pad (but why?)
-    // buf.extend(vec![Complex::default(); buf.len()]);
-
-    let mut buf2: Vec<Complex<f64>> = vec![Default::default(); buf.len()];
-
-    let fft = FFTplanner::<f64>::new(false).plan_fft(buf.len());
-    let ifft = FFTplanner::<f64>::new(true).plan_fft(buf.len());
-
-    fft.process(&mut buf, &mut buf2);
-    // for sample in &mut buf2 {
-    //     println!("{:?}", sample.norm());
-    //     sample.re *= sample.im;
-    // }
-    // buf2.drain(..reader_spec.sample_rate as usize / 2);
-    // buf2.resize(buf.len(), Default::default());
-    // buf2.rotate_right(reader_spec.sample_rate as usize / 10);
-    ifft.process(&mut buf2, &mut buf);
-
-    for sample in &buf {
-        // println!("{:?}", sample);
-        writer.write_sample(SampleConvertImpl::convert(sample.re / buf.len() as f64)).unwrap();
-    };
-    writer.finalize().unwrap();
+fn within(x: f64, y: f64, threshold: f64) -> bool {
+    (x - y).abs() <= threshold
 }
 
 fn main() {
-    let reader = hound::WavReader::open("mono.wav").unwrap();
+    let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -107,7 +66,7 @@ fn main() {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(10); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     let step_size: usize = window_size / 2;
@@ -131,6 +90,7 @@ fn main() {
     let mut img_x = 0;
 
     // Scan one channel of the audio.
+    let mut frame = 0;
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
         let sample: i16 = sample.unwrap();
         let sample_f64: f64 = SampleConvertImpl::convert(sample);
@@ -168,6 +128,29 @@ fn main() {
                 }
             }
 
+            // Effect in frequency space.
+            for sample in buf.iter_mut() {
+                sample.re *= sample.im;
+            }
+
+            // Frequency finder is wrong
+            // for i in 0..window_size {
+            //     let freq = i as f64 * reader_spec.sample_rate as f64 / window_size as f64;
+            //     if within(freq, 600., 100.) {
+            //     } else {
+            //         buf[i] *= 0.0;
+            //     }
+            // }
+
+            // buf2.copy_from_slice(&buf);
+            // let hw = window_size / 2;
+            // for i in 0..window_size {
+            //     let (mut r, mut theta) = buf[i].to_polar();
+            //     // r *= (i as i32 - hw as i32).abs() as f64 / hw as f64;
+            //     theta *= (i as i32 - hw as i32).abs() as f64 / hw as f64;
+            //     buf[i] = Complex::from_polar(&r, &theta);
+            // }
+
             ifft.process(&mut buf, &mut buf2);
             // overlap += buf2[..w-s];
             for i in 0..window_size-step_size {
@@ -178,19 +161,17 @@ fn main() {
                 writer.write_sample(SampleConvertImpl::convert(sample.re / buf.len() as f64)).unwrap();
             };
             // overlap = buf2[w-s..];
-            println!("{:?}", buf2.len());
-            println!("{:?}", buf_overlap.len());
-            println!("{:?}", buf2[step_size..].len());
             buf_overlap.copy_from_slice(&buf2[step_size..]);
 
             stft.move_to_next_column();
             img_x += 1;
+            frame+=1;
         }
     }
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
     let w = imgbuf.width();
     let h = imgbuf.height();
-    let factor = 2;
+    let factor = 1;
     DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
 }
