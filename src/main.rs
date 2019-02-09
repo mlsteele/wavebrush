@@ -66,7 +66,7 @@ fn main() {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(10); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     let step_size: usize = window_size / 2;
@@ -85,7 +85,7 @@ fn main() {
     let overlap_size = window_size - step_size;
     let mut buf_overlap: Vec<Complex<f64>> = vec![Default::default(); overlap_size];
 
-    let mut imgbuf = image::ImageBuffer::new(512, window_size as u32);
+    let mut imgbuf = image::ImageBuffer::new(1028, window_size as u32 / 2);
     // let mut imgbuf = image::DynamicImage::new_rgb8(1028, window_size as u32);
     let mut img_x = 0;
 
@@ -106,7 +106,7 @@ fn main() {
 
             if img_x < imgbuf.width() {
                 // let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
-                let morphed: Vec<_> = buf.iter().map(|v| (v.norm() + 0.).log10())
+                let morphed: Vec<_> = buf[..window_size/2].iter().map(|v| (v.norm() + 0.).log10())
                     .map(|v| if v > 0. {v} else {0.}).collect();
                 let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
                 let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
