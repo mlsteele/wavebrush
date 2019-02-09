@@ -78,9 +78,10 @@ fn main() {
     let ifft = FFTplanner::<f64>::new(true).plan_fft(buf.len());
 
     fft.process(&mut buf, &mut buf2);
-    // for sample in &buf2 {
-    //     println!("{:?}", sample.norm());
-    // }
+    for sample in &mut buf2 {
+        // println!("{:?}", sample.norm());
+        sample.re *= sample.im;
+    }
     ifft.process(&mut buf2, &mut buf);
 
     for sample in &buf {
