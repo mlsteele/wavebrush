@@ -2,6 +2,7 @@ extern crate hound;
 extern crate image;
 
 mod stft;
+mod bs;
 
 use std::f64;
 use stft::{STFT, WindowType};
@@ -54,8 +55,17 @@ fn within(x: f64, y: f64, threshold: f64) -> bool {
     (x - y).abs() <= threshold
 }
 
+fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
+    let base = i as f64 * sample_rate as f64 / fft_size as f64;
+    if i <= fft_size / 2 {
+        base
+    } else {
+        sample_rate as f64 - base
+    }
+}
+
 fn main() {
-    let reader = hound::WavReader::open("speech.wav").unwrap();
+    let reader = hound::WavReader::open("mono.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -129,18 +139,32 @@ fn main() {
             }
 
             // Effect in frequency space.
-            for sample in buf.iter_mut() {
-                sample.re *= sample.im;
-            }
+            // for sample in buf.iter_mut() {
+            //     sample.re *= sample.im;
+            // }
 
-            // Frequency finder is wrong
-            // for i in 0..window_size {
-            //     let freq = i as f64 * reader_spec.sample_rate as f64 / window_size as f64;
-            //     if within(freq, 600., 100.) {
-            //     } else {
-            //         buf[i] *= 0.0;
+            // if frame == 500 {
+            //     for (i, sample) in buf.iter().enumerate() {
+            //         if sample.norm() > 0.5 {
+            //             println!("{}: {} ({} hz)", i, sample.norm(),
+            //                      fft_freq(i, reader_spec.sample_rate as usize, window_size));
+            //         }
             //     }
             // }
+
+            // Favorite frequency
+            xxx("todo print the loudest frequency")
+            // buf.iter().map(||).fold
+
+            // Band pass
+            for i in 0..window_size {
+                let freq = fft_freq(i, reader_spec.sample_rate as usize, window_size);
+                buf[i] /= (freq-1000.).abs() + 1.;
+                if within(freq, 800., 100.) {
+                } else {
+                    buf[i] *= 0.0;
+                }
+            }
 
             // buf2.copy_from_slice(&buf);
             // let hw = window_size / 2;
