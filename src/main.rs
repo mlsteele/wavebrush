@@ -9,6 +9,7 @@ use stft::{STFT, WindowType};
 use rustfft::{FFTplanner};
 use num::complex::Complex;
 use image::{DynamicImage};
+use bs::*;
 
 trait SampleConvert<X,Y> {
     fn convert(x: X) -> Y;
@@ -65,7 +66,7 @@ fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
 }
 
 fn main() {
-    let reader = hound::WavReader::open("mono.wav").unwrap();
+    let reader = hound::WavReader::open("440.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -152,9 +153,10 @@ fn main() {
             //     }
             // }
 
-            // Favorite frequency
-            xxx("todo print the loudest frequency")
-            // buf.iter().map(||).fold
+            // Loudest frequency
+            if let Some((i, _)) = buf.iter().enumerate().f64_max_by_key(|(_, sample)| sample.norm()) {
+                println!("loudest freq: {}", fft_freq(i, reader_spec.sample_rate as usize, window_size));
+            }
 
             // Band pass
             for i in 0..window_size {
