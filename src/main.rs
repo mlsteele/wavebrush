@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 extern crate hound;
 extern crate image;
 
@@ -10,6 +12,7 @@ use rustfft::{FFTplanner};
 use num::complex::Complex;
 use image::{DynamicImage};
 use bs::*;
+use std::f64::consts::PI;
 
 trait SampleConvert<X,Y> {
     fn convert(x: X) -> Y;
@@ -66,7 +69,7 @@ fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
 }
 
 fn main() {
-    let reader = hound::WavReader::open("440.wav").unwrap();
+    let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -77,7 +80,7 @@ fn main() {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(7); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     let step_size: usize = window_size / 2;
@@ -154,18 +157,33 @@ fn main() {
             // }
 
             // Loudest frequency
-            if let Some((i, _)) = buf.iter().enumerate().f64_max_by_key(|(_, sample)| sample.norm()) {
-                println!("loudest freq: {}", fft_freq(i, reader_spec.sample_rate as usize, window_size));
-            }
+            // if let Some((i, _)) = buf.iter().enumerate().f64_max_by_key(|(_, sample)| sample.norm()) {
+            //     println!("loudest freq: {}", fft_freq(i, reader_spec.sample_rate as usize, window_size));
+            // }
 
             // Band pass
-            for i in 0..window_size {
+            // for i in 0..window_size {
+            //     let freq = fft_freq(i, reader_spec.sample_rate as usize, window_size);
+            //     buf[i] /= (freq-1000.).abs() + 1.;
+            //     if within(freq, 800., 100.) {
+            //     } else {
+            //         buf[i] *= 0.0;
+            //     }
+            // }
+
+            // Lose phase information
+            for (i, sample) in buf.iter_mut().enumerate() {
+                let (mut r, mut theta) = sample.to_polar();
+                theta = 0.;
+                *sample = Complex::from_polar(&r, &theta);
+            }
+
+            // Simulate phase recovery.
+            for (i, sample) in buf.iter_mut().enumerate() {
+                let (mut r, mut theta) = sample.to_polar();
                 let freq = fft_freq(i, reader_spec.sample_rate as usize, window_size);
-                buf[i] /= (freq-1000.).abs() + 1.;
-                if within(freq, 800., 100.) {
-                } else {
-                    buf[i] *= 0.0;
-                }
+                theta = -2. * PI * frame as f64 / reader_spec.sample_rate as f64 * freq;
+                *sample = Complex::from_polar(&r, &theta);
             }
 
             // buf2.copy_from_slice(&buf);
