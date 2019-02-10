@@ -80,7 +80,7 @@ fn main() {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(7); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     let step_size: usize = window_size / 2;
@@ -172,19 +172,19 @@ fn main() {
             // }
 
             // Lose phase information
-            for (i, sample) in buf.iter_mut().enumerate() {
-                let (mut r, mut theta) = sample.to_polar();
-                theta = 0.;
-                *sample = Complex::from_polar(&r, &theta);
-            }
+            // for (i, sample) in buf.iter_mut().enumerate() {
+            //     let (mut r, mut theta) = sample.to_polar();
+            //     theta = 0.;
+            //     *sample = Complex::from_polar(&r, &theta);
+            // }
 
             // Simulate phase recovery.
-            for (i, sample) in buf.iter_mut().enumerate() {
-                let (mut r, mut theta) = sample.to_polar();
-                let freq = fft_freq(i, reader_spec.sample_rate as usize, window_size);
-                theta = -2. * PI * frame as f64 / reader_spec.sample_rate as f64 * freq;
-                *sample = Complex::from_polar(&r, &theta);
-            }
+            // for (i, sample) in buf.iter_mut().enumerate() {
+            //     let (mut r, mut theta) = sample.to_polar();
+            //     let freq = fft_freq(i, reader_spec.sample_rate as usize, window_size);
+            //     theta = -2. * PI * frame as f64 / reader_spec.sample_rate as f64 * freq;
+            //     *sample = Complex::from_polar(&r, &theta);
+            // }
 
             // buf2.copy_from_slice(&buf);
             // let hw = window_size / 2;
