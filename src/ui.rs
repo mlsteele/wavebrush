@@ -1,11 +1,13 @@
 use glium::{
     backend::{Context, Facade},
+    texture::{ClientFormat, RawImage2d},
     Texture2d,
 };
 use imgui::{FontGlyphRange, ImFontConfig, ImGui, Ui};
 use imgui_winit_support;
 use std::rc::Rc;
 use std::time::Instant;
+use std::borrow::Cow;
 
 const CLEAR_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
@@ -18,7 +20,7 @@ pub fn run() {
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
-        .with_dimensions(glutin::dpi::LogicalSize::new(1024f64, 768f64));
+        .with_dimensions(glutin::dpi::LogicalSize::new(500f64, 500f64));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
@@ -43,6 +45,8 @@ pub fn run() {
     let mut renderer = Renderer::init(&mut imgui, &display).expect("Failed to initialize renderer");
 
     imgui_winit_support::configure_keys(&mut imgui);
+
+    let texture_id = renderer.textures().insert(generate_texture(display.get_context()));
 
     let mut last_frame = Instant::now();
     let mut quit = false;
@@ -79,11 +83,9 @@ pub fn run() {
 
         use imgui::{im_str,ImGuiCond};
         ui.window(im_str!("Hello world"))
-            .size((300.0, 100.0), ImGuiCond::FirstUseEver)
+            .size((200.0, 300.0), ImGuiCond::FirstUseEver)
             .build(|| {
-                ui.text(im_str!("Hello world!"));
-                ui.text(im_str!("こんにちは世界！"));
-                ui.text(im_str!("This...is...imgui-rs!"));
+                ui.text(im_str!("Argh"));
                 ui.separator();
                 let mouse_pos = ui.imgui().mouse_pos();
                 ui.text(im_str!(
@@ -91,6 +93,8 @@ pub fn run() {
                     mouse_pos.0,
                     mouse_pos.1
                 ));
+                ui.separator();
+                ui.image(texture_id, (100.0, 100.0)).build();
             });
         // if !run_ui(&ui, display.get_context(), renderer.textures()) {
         //     break;
@@ -110,4 +114,26 @@ pub fn run() {
             break;
         }
     }
+}
+
+fn generate_texture(gl_ctx: &Rc<Context>) -> Texture2d {
+  // Generate dummy texture
+  let (WIDTH, HEIGHT) = (100, 100);
+  let mut data = Vec::with_capacity(WIDTH * HEIGHT);
+  for i in 0..WIDTH {
+      for j in 0..HEIGHT {
+          // Insert RGB values
+          data.push(i as u8);
+          data.push(j as u8);
+          data.push((i + j) as u8);
+      }
+  }
+
+  let raw = RawImage2d {
+      data: Cow::Borrowed(&data),
+      width: WIDTH as u32,
+      height: HEIGHT as u32,
+      format: ClientFormat::U8U8U8,
+  };
+  Texture2d::new(gl_ctx, raw).unwrap()
 }
