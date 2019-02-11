@@ -180,7 +180,7 @@ fn main2() -> SpectroImage {
     let w = imgbuf.width();
     let h = imgbuf.height();
     let factor = 1;
-    // DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
+    DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
     imgbuf
 }

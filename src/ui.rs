@@ -10,7 +10,7 @@ use std::time::Instant;
 use std::borrow::Cow;
 use image;
 
-const CLEAR_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+const CLEAR_COLOR: [f32; 4] = [0.01, 0.01, 0.01, 1.];
 
 type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
 
@@ -23,16 +23,16 @@ pub fn run(spectrogram: SpectroImage) {
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
-        .with_dimensions(glutin::dpi::LogicalSize::new(500f64, 500f64));
+        .with_dimensions(glutin::dpi::LogicalSize::new(
+            spectrogram.width() as f64 + 100., spectrogram.height() as f64 + 100.));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
     let mut imgui = ImGui::init();
     imgui.set_ini_filename(None);
 
-    // In the examples we only use integer DPI factors, because the UI can get very blurry
-    // otherwise. This might or might not be what you want in a real application.
-    let hidpi_factor = window.get_hidpi_factor().round();
+    // let hidpi_factor = window.get_hidpi_factor().round();
+    let hidpi_factor = 1.;
 
     let font_size = (13.0 * hidpi_factor) as f32;
 
@@ -49,14 +49,16 @@ pub fn run(spectrogram: SpectroImage) {
 
     imgui_winit_support::configure_keys(&mut imgui);
 
-    let texture_id = renderer.textures().insert(texture_from_image(spectrogram, &display));
+    let texture_id = renderer.textures().insert(texture_from_image(&spectrogram, &display));
 
     let mut last_frame = Instant::now();
     let mut quit = false;
 
     loop {
         events_loop.poll_events(|event| {
-            use glium::glutin::{Event, WindowEvent::CloseRequested};
+            use glium::glutin::{Event, WindowEvent, WindowEvent::CloseRequested, VirtualKeyCode, KeyboardInput};
+            use glium::glutin::Event::*;
+            use glium::glutin::ElementState::*;
 
             imgui_winit_support::handle_event(
                 &mut imgui,
@@ -68,6 +70,10 @@ pub fn run(spectrogram: SpectroImage) {
             if let Event::WindowEvent { event, .. } = event {
                 match event {
                     CloseRequested => quit = true,
+                    WindowEvent::KeyboardInput{
+                        input: KeyboardInput{
+                            state: Pressed, virtual_keycode:
+                            Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
                     _ => (),
                 }
             }
@@ -84,11 +90,13 @@ pub fn run(spectrogram: SpectroImage) {
 
         let ui = imgui.frame(frame_size, delta_s);
 
+        let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
-        ui.window(im_str!("Hello world"))
-            .size((200.0, 300.0), ImGuiCond::FirstUseEver)
+        ui.window(im_str!("Wavebrush"))
+            .position((5.,5.), cond)
+            .size((spectrogram.width() as f32 + 100., spectrogram.height() as f32 + 100.), cond)
             .build(|| {
-                ui.text(im_str!("Argh"));
+                ui.text(im_str!("Spectrogram"));
                 ui.separator();
                 let mouse_pos = ui.imgui().mouse_pos();
                 ui.text(im_str!(
@@ -97,11 +105,8 @@ pub fn run(spectrogram: SpectroImage) {
                     mouse_pos.1
                 ));
                 ui.separator();
-                ui.image(texture_id, (100.0, 100.0)).build();
+                ui.image(texture_id, (spectrogram.width() as f32, spectrogram.height() as f32)).build();
             });
-        // if !run_ui(&ui, display.get_context(), renderer.textures()) {
-        //     break;
-        // }
 
         let mut target = display.draw();
         target.clear_color(
@@ -119,13 +124,12 @@ pub fn run(spectrogram: SpectroImage) {
     }
 }
 
-fn texture_from_image<F>(img: SpectroImage, gl_ctx: &F) -> Texture2d
+fn texture_from_image<F>(img: &SpectroImage, gl_ctx: &F) -> Texture2d
 where F: Facade {
-    let (w, h) = (img.width(), img.height());
     let raw = RawImage2d {
-        data: Cow::Owned(img.into_raw()),
-        width: w,
-        height: h,
+        data: Cow::Owned(img.clone().into_raw()),
+        width: img.width(),
+        height: img.height(),
         format: ClientFormat::U8U8U8,
     };
     Texture2d::new(gl_ctx, raw).unwrap()
