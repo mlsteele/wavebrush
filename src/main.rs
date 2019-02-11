@@ -3,8 +3,12 @@
 extern crate hound;
 extern crate image;
 
+#[allow(dead_code)]
 mod stft;
 mod bs;
+mod sample;
+#[allow(dead_code)]
+mod util;
 
 use std::f64;
 use stft::{STFT, WindowType};
@@ -13,61 +17,10 @@ use num::complex::Complex;
 use image::{DynamicImage};
 use bs::*;
 use std::f64::consts::PI;
+use sample::{SampleConvert,*};
+use util::*;
 
-trait SampleConvert<X,Y> {
-    fn convert(x: X) -> Y;
-}
-
-struct SampleConvertImpl {}
-
-impl SampleConvert<i32, f64> for SampleConvertImpl {
-    fn convert(x: i32) -> f64 {
-        match x as f64 / std::i32::MAX as f64 {
-            y if y > 1. => 1.,
-            y if y < -1. => -1.,
-            y => y,
-        }
-    }
-}
-
-impl SampleConvert<i16, f64> for SampleConvertImpl {
-    fn convert(x: i16) -> f64 {
-        match x as f64 / std::i16::MAX as f64 {
-            y if y > 1. => 1.,
-            y if y < -1. => -1.,
-            y => y,
-        }
-    }
-}
-
-impl SampleConvert<f64, i16> for SampleConvertImpl {
-    fn convert(x: f64) -> i16 {
-        let max = std::i16::MAX;
-        match (x * max as f64) as i16 {
-            y if y > max => max,
-            y if y < -max => -max,
-            y => y,
-        }
-    }
-}
-
-fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
-    return ((v - in_min) / (in_max - in_min) * (out_max - out_min)) + out_min;
-}
-
-fn within(x: f64, y: f64, threshold: f64) -> bool {
-    (x - y).abs() <= threshold
-}
-
-fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
-    let base = i as f64 * sample_rate as f64 / fft_size as f64;
-    if i <= fft_size / 2 {
-        base
-    } else {
-        sample_rate as f64 - base
-    }
-}
-
+#[allow(unused_variables)]
 fn main() {
     let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
@@ -107,7 +60,7 @@ fn main() {
     let mut frame = 0;
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
         let sample: i16 = sample.unwrap();
-        let sample_f64: f64 = SampleConvertImpl::convert(sample);
+        let sample_f64: f64 = SampleConvert::convert(sample);
 
         stft.append_samples(&[sample_f64]);
         while stft.contains_enough_to_compute() {
@@ -202,7 +155,7 @@ fn main() {
             }
             // shipit(overlap);
             for sample in &buf_overlap {
-                writer.write_sample(SampleConvertImpl::convert(sample.re / buf.len() as f64)).unwrap();
+                writer.write_sample(SampleConvert::convert(sample.re / buf.len() as f64)).unwrap();
             };
             // overlap = buf2[w-s..];
             buf_overlap.copy_from_slice(&buf2[step_size..]);
