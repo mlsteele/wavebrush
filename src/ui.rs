@@ -8,10 +8,13 @@ use imgui_winit_support;
 use std::rc::Rc;
 use std::time::Instant;
 use std::borrow::Cow;
+use image;
 
 const CLEAR_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-pub fn run() {
+type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
+
+pub fn run(spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
@@ -46,7 +49,7 @@ pub fn run() {
 
     imgui_winit_support::configure_keys(&mut imgui);
 
-    let texture_id = renderer.textures().insert(generate_texture(display.get_context()));
+    let texture_id = renderer.textures().insert(texture_from_image(spectrogram, &display));
 
     let mut last_frame = Instant::now();
     let mut quit = false;
@@ -116,24 +119,37 @@ pub fn run() {
     }
 }
 
-fn generate_texture(gl_ctx: &Rc<Context>) -> Texture2d {
-  // Generate dummy texture
-  let (WIDTH, HEIGHT) = (100, 100);
-  let mut data = Vec::with_capacity(WIDTH * HEIGHT);
-  for i in 0..WIDTH {
-      for j in 0..HEIGHT {
-          // Insert RGB values
-          data.push(i as u8);
-          data.push(j as u8);
-          data.push((i + j) as u8);
-      }
-  }
+fn texture_from_image<F>(img: SpectroImage, gl_ctx: &F) -> Texture2d
+where F: Facade {
+    let (w, h) = (img.width(), img.height());
+    let raw = RawImage2d {
+        data: Cow::Owned(img.into_raw()),
+        width: w,
+        height: h,
+        format: ClientFormat::U8U8U8,
+    };
+    Texture2d::new(gl_ctx, raw).unwrap()
+}
 
-  let raw = RawImage2d {
-      data: Cow::Borrowed(&data),
-      width: WIDTH as u32,
-      height: HEIGHT as u32,
-      format: ClientFormat::U8U8U8,
-  };
-  Texture2d::new(gl_ctx, raw).unwrap()
+fn generate_texture<F>(gl_ctx: &F) -> Texture2d
+where F: Facade {
+    // Generate dummy texture
+    let (WIDTH, HEIGHT) = (100, 100);
+    let mut data = Vec::with_capacity(WIDTH * HEIGHT);
+    for i in 0..WIDTH {
+        for j in 0..HEIGHT {
+            // Insert RGB values
+            data.push(i as u8);
+            data.push(j as u8);
+            data.push((i + j) as u8);
+        }
+    }
+
+    let raw = RawImage2d {
+        data: Cow::Borrowed(&data),
+        width: WIDTH as u32,
+        height: HEIGHT as u32,
+        format: ClientFormat::U8U8U8,
+    };
+    Texture2d::new(gl_ctx, raw).unwrap()
 }

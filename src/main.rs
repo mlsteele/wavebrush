@@ -26,11 +26,13 @@ use sample::{SampleConvert,*};
 use util::*;
 
 fn main() {
-    ui::run();
+    ui::run(main2());
 }
 
+type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
+
 #[allow(unused_variables, dead_code)]
-fn main2() {
+fn main2() -> SpectroImage {
     let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
@@ -178,6 +180,7 @@ fn main2() {
     let w = imgbuf.width();
     let h = imgbuf.height();
     let factor = 1;
-    DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
+    // DynamicImage::ImageRgb8(imgbuf).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
+    imgbuf
 }
