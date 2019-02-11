@@ -2,6 +2,7 @@
 
 extern crate hound;
 extern crate image;
+#[macro_use] extern crate failure;
 
 mod sample;
 #[allow(dead_code)]
@@ -16,6 +17,12 @@ use bs::*;
 
 mod ui;
 use ui::*;
+
+#[allow(dead_code)]
+mod spectrogram;
+use spectrogram::*;
+
+mod error;
 
 use std::f64;
 use rustfft::{FFTplanner};
@@ -33,7 +40,7 @@ type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
 
 #[allow(unused_variables, dead_code)]
 fn main2() -> SpectroImage {
-    let reader = hound::WavReader::open("speech.wav").unwrap();
+    let reader = hound::WavReader::open("shortspeech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -44,7 +51,7 @@ fn main2() -> SpectroImage {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(8); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     let step_size: usize = window_size / 2;
@@ -56,16 +63,18 @@ fn main2() -> SpectroImage {
     println!("window_sec: {:?}", window_size as f64 / reader_spec.sample_rate as f64);
     println!("step_size: {:?}", step_size);
 
+    let settings = Settings{
+        sample_rate: reader_spec.sample_rate,
+        window_size: window_size as u32,
+    };
+    let mut sp = Spectrogram::new(settings);
+
     let ifft = FFTplanner::<f64>::new(true).plan_fft(window_size);
 
     let mut buf: Vec<Complex<f64>>  = vec![Default::default(); window_size];
     let mut buf2: Vec<Complex<f64>> = vec![Default::default(); window_size];
     let overlap_size = window_size - step_size;
     let mut buf_overlap: Vec<Complex<f64>> = vec![Default::default(); overlap_size];
-
-    let mut imgbuf = image::ImageBuffer::new(1028, window_size as u32 / 2);
-    // let mut imgbuf = image::DynamicImage::new_rgb8(1028, window_size as u32);
-    let mut img_x = 0;
 
     // Scan one channel of the audio.
     let mut frame = 0;
@@ -82,29 +91,7 @@ fn main2() -> SpectroImage {
             //     *sample /= buf_len as f64;
             // }
 
-            if img_x < imgbuf.width() {
-                // let morphed: Vec<_> = buf.iter().map(|v| v.norm().log10()).collect();
-                let morphed: Vec<_> = buf[..window_size/2].iter().map(|v| (v.norm() + 0.).log10())
-                    .map(|v| if v > 0. {v} else {0.}).collect();
-                let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
-                let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
-                // if img_x == 800 {
-                //     println!("{:?} -> {:?}", min, max);
-                // }
-                for (i, &v) in morphed.iter().enumerate() {
-                    let sv = rescale(v, min, max, 0., 1.);
-                    // let sv = rescale(v, 0., 2., 0., 1.);
-                    let pixel = imgbuf.get_pixel_mut(img_x, imgbuf.height()-1-i as u32);
-                    // if img_x == 800 {
-                    //     println!("{:?}", sv);
-                    // }
-                    *pixel = image::Rgb([
-                        rescale(sv, 0., 1., 0., 245.) as u8 + 10,
-                        rescale(sv, 0., 1., 0., 190.) as u8,
-                        rescale(sv, 0., 1., 0., 80.) as u8 + 20,
-                    ]);
-                }
-            }
+            sp.push_front(buf.clone()).expect("push column");
 
             // Effect in frequency space.
             // for sample in buf.iter_mut() {
@@ -172,11 +159,11 @@ fn main2() -> SpectroImage {
             buf_overlap.copy_from_slice(&buf2[step_size..]);
 
             stft.move_to_next_column();
-            img_x += 1;
             frame+=1;
         }
     }
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
+    let imgbuf = sp.image().expect("image");
     let w = imgbuf.width();
     let h = imgbuf.height();
     let factor = 1;

@@ -138,10 +138,10 @@ where F: Facade {
 fn generate_texture<F>(gl_ctx: &F) -> Texture2d
 where F: Facade {
     // Generate dummy texture
-    let (WIDTH, HEIGHT) = (100, 100);
-    let mut data = Vec::with_capacity(WIDTH * HEIGHT);
-    for i in 0..WIDTH {
-        for j in 0..HEIGHT {
+    let (width, height) = (100, 100);
+    let mut data = Vec::with_capacity(width * height);
+    for i in 0..width {
+        for j in 0..height {
             // Insert RGB values
             data.push(i as u8);
             data.push(j as u8);
@@ -151,8 +151,8 @@ where F: Facade {
 
     let raw = RawImage2d {
         data: Cow::Borrowed(&data),
-        width: WIDTH as u32,
-        height: HEIGHT as u32,
+        width: width as u32,
+        height: height as u32,
         format: ClientFormat::U8U8U8,
     };
     Texture2d::new(gl_ctx, raw).unwrap()
