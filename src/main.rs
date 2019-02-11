@@ -3,25 +3,34 @@
 extern crate hound;
 extern crate image;
 
-#[allow(dead_code)]
-mod stft;
-mod bs;
 mod sample;
 #[allow(dead_code)]
 mod util;
 
-use std::f64;
+#[allow(dead_code)]
+mod stft;
 use stft::{STFT, WindowType};
+
+mod bs;
+use bs::*;
+
+mod ui;
+use ui::*;
+
+use std::f64;
 use rustfft::{FFTplanner};
 use num::complex::Complex;
 use image::{DynamicImage};
-use bs::*;
 use std::f64::consts::PI;
 use sample::{SampleConvert,*};
 use util::*;
 
-#[allow(unused_variables)]
 fn main() {
+    ui::run();
+}
+
+#[allow(unused_variables, dead_code)]
+fn main2() {
     let reader = hound::WavReader::open("speech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
