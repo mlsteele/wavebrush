@@ -34,7 +34,19 @@ pub fn run(spectrogram: SpectroImage) {
     // let hidpi_factor = window.get_hidpi_factor().round();
     let hidpi_factor = 1.;
 
-    let font_size = (13.0 * hidpi_factor) as f32;
+    let font_size = (18.0 * hidpi_factor) as f32;
+
+    // For info on how to configure fonts:
+    // https://github.com/ocornut/imgui/blob/master/imgui.h#L1909
+    imgui.fonts().add_font_with_config(
+        include_bytes!("../resources/OpenSans/OpenSans-Regular.ttf"),
+        ImFontConfig::new()
+            .oversample_h(1)
+            .pixel_snap_h(true)
+            .size_pixels(font_size)
+            .glyph_extra_spacing([0.9, 0.]),
+        &FontGlyphRange::default(),
+    );
 
     imgui.fonts().add_default_font_with_config(
         ImFontConfig::new()
