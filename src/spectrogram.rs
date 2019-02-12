@@ -14,6 +14,8 @@ pub struct Settings {
     pub window_size: u32,
 }
 
+/// More than just a spectrogram.
+/// Saves full FFT output including phase information.
 #[derive(Debug, Clone)]
 pub struct Spectrogram {
     pub settings: Settings,
@@ -26,6 +28,10 @@ impl Spectrogram {
             settings: settings,
             data: Default::default(),
         }
+    }
+
+    pub fn explode(self) -> (Settings, VecDeque<Column>) {
+        (self.settings, self.data)
     }
 
     /// Push a column of FFT values.
