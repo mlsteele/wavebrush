@@ -6,6 +6,7 @@ use std::f64;
 
 type V = Complex<f64>;
 type Column = Vec<V>;
+pub type Img = image::ImageBuffer<image::Rgb<u8>, Vec<u8>>;
 
 #[derive(Debug, Clone)]
 pub struct Settings {
@@ -59,7 +60,7 @@ impl Spectrogram {
         }
     }
 
-    pub fn image(&self) -> Result<image::ImageBuffer<image::Rgb<u8>, Vec<u8>>> {
+    pub fn image(&self) -> Result<Img> {
         ensure!(self.data.len() > 0, "cannot create image from empty spectrogram");
         let ws = self.settings.window_size;
         let mut img = image::ImageBuffer::new(self.data.len() as u32, ws / 2);

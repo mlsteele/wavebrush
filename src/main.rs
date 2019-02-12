@@ -84,7 +84,17 @@ fn main2() -> SpectroImage {
     }
 
     let mut sg = shredder.sg;
-    Wrapper::new(&mut sg).airbrush(50, 50);
+    let mut w = Wrapper::new(&mut sg);
+    w.airbrush(50, 50);
+    w.airbrush(60, 40);
+    w.airbrush(70, 30);
+    w.airbrush(80, 30);
+    w.airbrush(90, 20);
+    w.airbrush(100, 40);
+    w.airbrush(110, 60);
+    w.airbrush(120, 80);
+    w.airbrush(130, 90);
+    w.airbrush(140, 85);
 
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();

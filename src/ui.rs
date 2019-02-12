@@ -71,6 +71,7 @@ pub fn run(spectrogram: SpectroImage) {
             use glium::glutin::{Event, WindowEvent, WindowEvent::CloseRequested, VirtualKeyCode, KeyboardInput};
             use glium::glutin::Event::*;
             use glium::glutin::ElementState::*;
+            // println!("{:?}", event);
 
             imgui_winit_support::handle_event(
                 &mut imgui,
@@ -86,6 +87,9 @@ pub fn run(spectrogram: SpectroImage) {
                         input: KeyboardInput{
                             state: Pressed, virtual_keycode:
                             Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
+                    WindowEvent::CursorMoved{position, ..} => {
+                        println!("{:?}", position);
+                    },
                     _ => (),
                 }
             }
