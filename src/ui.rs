@@ -102,11 +102,13 @@ pub fn run(spectrogram: SpectroImage) {
 
         let ui = imgui.frame(frame_size, delta_s);
 
+        let img_scale = 2.;
         let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
         ui.window(im_str!("Wavebrush"))
             .position((5.,5.), cond)
-            .size((spectrogram.width() as f32 + 100., spectrogram.height() as f32 + 100.), cond)
+            .size((spectrogram.width() as f32 * img_scale + 100.,
+                   spectrogram.height() as f32 * img_scale + 100.), cond)
             .build(|| {
                 ui.text(im_str!("Spectrogram"));
                 ui.separator();
@@ -117,7 +119,8 @@ pub fn run(spectrogram: SpectroImage) {
                     mouse_pos.1
                 ));
                 ui.separator();
-                ui.image(texture_id, (spectrogram.width() as f32, spectrogram.height() as f32)).build();
+                ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
+                                      spectrogram.height() as f32 * img_scale)).build();
             });
 
         let mut target = display.draw();

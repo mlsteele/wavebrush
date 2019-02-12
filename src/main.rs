@@ -26,6 +26,10 @@ use spectrogram::*;
 mod shredder;
 use shredder::*;
 
+#[allow(dead_code)]
+mod edit;
+use edit::*;
+
 mod error;
 
 use std::f64;
@@ -79,7 +83,9 @@ fn main2() -> SpectroImage {
         shredder.append_samples(&[sample_f64]).unwrap();
     }
 
-    let sg = shredder.sg;
+    let mut sg = shredder.sg;
+    Wrapper::new(&mut sg).airbrush(50, 50);
+
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();
     while unshredder.output(&mut buf).unwrap() {

@@ -27,3 +27,5 @@ Painting on spectrograms.
 - https://electronics.stackexchange.com/questions/25900/scaling-fft-output-by-number-of-points-in-fft
 - https://math.stackexchange.com/questions/166511/fft-with-a-real-matrix-why-storing-just-half-the-coefficients probably why stft outputs half sized
 - https://stackoverflow.com/questions/4364823/how-do-i-obtain-the-frequencies-of-each-value-in-an-fft
+- https://dsp.stackexchange.com/questions/18036/interpreting-magnitude-of-dft-results
+
