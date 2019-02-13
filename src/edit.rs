@@ -22,7 +22,7 @@ impl<'a> Wrapper<'a> {
                 let y = y + dy;
                 if let Some(v) = self.sp.get_mut(x, y) {
                     let (mut r, theta) = v.to_polar();
-                    r += 40. * 1. / (brush_r2+1.);
+                    r += 5. * 1. / (brush_r2+1.);
                     *v = Complex::from_polar(&r, &theta);
                 }
             }

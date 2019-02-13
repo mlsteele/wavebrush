@@ -125,7 +125,10 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
             .size((spectrogram.width() as f32 * img_scale + 100.,
                    spectrogram.height() as f32 * img_scale + 200.), cond)
             .build(|| {
-                ui.text(im_str!("Spectrogram"));
+                let pressed = ui.small_button(im_str!("Play"));
+                if pressed {
+                    let _ = ctl.s.try_send(ToBackend::Play);
+                }
                 ui.separator();
                 let mouse_pos = ui.imgui().mouse_pos();
                 let cursor_pos = ui.get_cursor_pos();

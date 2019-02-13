@@ -1,8 +1,10 @@
 #![allow(unused_imports)]
 
 extern crate hound;
+extern crate rodio;
 extern crate image;
 #[macro_use] extern crate failure;
+use failure::*;
 
 mod sample;
 #[allow(dead_code)]
@@ -84,17 +86,6 @@ fn main() -> EResult {
     }
 
     let mut sg = shredder.sg;
-    let mut w = Wrapper::new(&mut sg);
-    w.airbrush(50, 50);
-    w.airbrush(60, 40);
-    w.airbrush(70, 30);
-    w.airbrush(80, 30);
-    w.airbrush(90, 20);
-    w.airbrush(100, 40);
-    w.airbrush(110, 60);
-    w.airbrush(120, 80);
-    w.airbrush(130, 90);
-    w.airbrush(140, 85);
 
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();
@@ -114,21 +105,43 @@ fn main() -> EResult {
 
     let (uictl, ctl) = new_ctl();
 
+    // The UI can only run on the main thread on macos.
+    use control::ToBackend::*;
+
     let h = thread::spawn(move || {
-        use control::ToBackend::*;
         for msg in ctl.r.iter() { match msg {
             Prod{x, y} => {
+                println!("<- prod");
                 Wrapper::new(&mut sg).airbrush(x, y);
                 let r = ctl.s.try_send(ToUI::Spectrogram(sg.image().expect("render image")));
+            },
+            Play => {
+                println!("<- play");
+                if let Err(err) = play(sg.clone()) {
+                    println!("play failed: {:?}", err);
+                }
             },
             Quit => break,
         }}
     });
 
-    // The UI can only run on the main thread on macos.
     ui::run(uictl, imgbuf);
 
     h.join().expect("ui thread join");
+    EOK
+}
+
+fn play(sg: Spectrogram) -> EResult {
+    use rodio::*;
+    let device = rodio::default_output_device().ok_or(format_err!("output device"))?;
+    let mut unshredder = Unshredder::new(sg.clone());
+    let mut buf = unshredder.allocate_output_buf();
+    let mut buf_all = Vec::new();
+    while unshredder.output(&mut buf)? {
+        buf_all.extend(buf.iter().map(|&x| x as f32));
+    }
+    let src = rodio::buffer::SamplesBuffer::new(1, sg.settings.sample_rate, buf_all);
+    rodio::play_raw(&device, src.convert_samples());
     EOK
 }
 
