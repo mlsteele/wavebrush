@@ -12,6 +12,10 @@ mod util;
 mod stft;
 use stft::{STFT, WindowType};
 
+#[allow(dead_code)]
+mod control;
+use control::*;
+
 mod bs;
 use bs::*;
 
@@ -39,15 +43,12 @@ use image::{DynamicImage};
 use std::f64::consts::PI;
 use sample::{SampleConvert,*};
 use util::*;
-
-fn main() {
-    ui::run(main2());
-}
+use std::thread;
 
 type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
 
-#[allow(unused_variables, dead_code)]
-fn main2() -> SpectroImage {
+#[allow(unused_variables)]
+fn main() {
     let reader = hound::WavReader::open("shortspeech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
@@ -111,7 +112,13 @@ fn main2() -> SpectroImage {
     let factor = 1;
     DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
-    imgbuf
+
+    let (ui, backend) = new_ctl();
+
+    let h = thread::spawn(|| {
+        ui::run(ui, imgbuf);
+    });
+    h.join();
 }
 
 /*

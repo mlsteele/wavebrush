@@ -9,22 +9,25 @@ use std::rc::Rc;
 use std::time::Instant;
 use std::borrow::Cow;
 use image;
+use crate::control::*;
 
 const CLEAR_COLOR: [f32; 4] = [0.01, 0.01, 0.01, 1.];
 
 type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
 
-pub fn run(spectrogram: SpectroImage) {
+pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
+    let img_scale = 2f32;
 
     let mut events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
         .with_dimensions(glutin::dpi::LogicalSize::new(
-            spectrogram.width() as f64 + 100., spectrogram.height() as f64 + 100.));
+            spectrogram.width() as f64 * img_scale as f64 + 100.,
+            spectrogram.height() as f64 * img_scale as f64 + 100.));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
@@ -106,25 +109,43 @@ pub fn run(spectrogram: SpectroImage) {
 
         let ui = imgui.frame(frame_size, delta_s);
 
-        let img_scale = 2.;
         let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
         ui.window(im_str!("Wavebrush"))
             .position((5.,5.), cond)
             .size((spectrogram.width() as f32 * img_scale + 100.,
-                   spectrogram.height() as f32 * img_scale + 100.), cond)
+                   spectrogram.height() as f32 * img_scale + 200.), cond)
             .build(|| {
                 ui.text(im_str!("Spectrogram"));
                 ui.separator();
                 let mouse_pos = ui.imgui().mouse_pos();
+                let cursor_pos = ui.get_cursor_pos();
+                let cursor_screen_pos = ui.get_cursor_screen_pos();
+                let mouse_image_pos = (mouse_pos.0 - cursor_screen_pos.0,
+                                       mouse_pos.1 - cursor_screen_pos.1);
+                ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
+                                      spectrogram.height() as f32 * img_scale)).build();
+                ui.separator();
                 ui.text(im_str!(
                     "Mouse Position: ({:.1},{:.1})",
                     mouse_pos.0,
                     mouse_pos.1
                 ));
-                ui.separator();
-                ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
-                                      spectrogram.height() as f32 * img_scale)).build();
+                ui.text(im_str!(
+                    "Cursor Position (Window): ({:.1},{:.1})",
+                    cursor_pos.0,
+                    cursor_pos.1
+                ));
+                ui.text(im_str!(
+                    "Cursor Position (Screen): ({:.1},{:.1})",
+                    cursor_screen_pos.0,
+                    cursor_screen_pos.1
+                ));
+                ui.text(im_str!(
+                    "Mouse Position (Image): ({:.1},{:.1})",
+                    mouse_image_pos.0,
+                    mouse_image_pos.1
+                ));
             });
 
         let mut target = display.draw();
