@@ -114,18 +114,19 @@ fn main() -> EResult {
 
     let (uictl, ctl) = new_ctl();
 
-    let h = thread::spawn(|| {
-        ui::run(uictl, imgbuf);
+    let h = thread::spawn(move || {
+        use control::ToBackend::*;
+        for msg in ctl.r.iter() { match msg {
+            Prod{x, y} => {
+                Wrapper::new(&mut sg).airbrush(x, y);
+                let r = ctl.s.try_send(ToUI::Spectrogram(sg.image().expect("render image")));
+            },
+            Quit => break,
+        }}
     });
 
-    use control::ToBackend::*;
-    for msg in ctl.r.iter() { match msg {
-        Prod{x, y} => {
-            Wrapper::new(&mut sg).airbrush(x, y);
-            let r = ctl.s.try_send(ToUI::Spectrogram(sg.image()?));
-        },
-        Quit => break,
-    }}
+    // The UI can only run on the main thread on macos.
+    ui::run(uictl, imgbuf);
 
     h.join().expect("ui thread join");
     EOK
