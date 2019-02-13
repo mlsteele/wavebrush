@@ -70,6 +70,15 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let mut quit = false;
 
     loop {
+        for msg in ctl.r.try_iter() {
+            use ToUI::*;
+            match msg {
+                Spectrogram(img) => {
+                    let _ = renderer.textures().replace(texture_id, texture_from_image(&img, &display));
+                },
+            }
+        }
+
         events_loop.poll_events(|event| {
             use glium::glutin::{Event, WindowEvent, WindowEvent::CloseRequested, VirtualKeyCode, KeyboardInput};
             use glium::glutin::Event::*;
@@ -91,7 +100,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                             state: Pressed, virtual_keycode:
                             Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
                     WindowEvent::CursorMoved{position, ..} => {
-                        println!("{:?}", position);
+                        let _ = ctl.s.try_send(ToBackend::Prod{x: position.x as i32, y: position.y as i32});
                     },
                     _ => (),
                 }

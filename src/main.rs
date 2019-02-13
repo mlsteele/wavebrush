@@ -35,6 +35,7 @@ mod edit;
 use edit::*;
 
 mod error;
+use error::*;
 
 use std::f64;
 use rustfft::{FFTplanner};
@@ -45,10 +46,8 @@ use sample::{SampleConvert,*};
 use util::*;
 use std::thread;
 
-type SpectroImage = image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>>;
-
 #[allow(unused_variables)]
-fn main() {
+fn main() -> EResult {
     let reader = hound::WavReader::open("shortspeech.wav").unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
@@ -113,12 +112,23 @@ fn main() {
     DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
 
-    let (ui, backend) = new_ctl();
+    let (uictl, ctl) = new_ctl();
 
     let h = thread::spawn(|| {
-        ui::run(ui, imgbuf);
+        ui::run(uictl, imgbuf);
     });
-    h.join();
+
+    use control::ToBackend::*;
+    for msg in ctl.r.iter() { match msg {
+        Prod{x, y} => {
+            Wrapper::new(&mut sg).airbrush(x, y);
+            let r = ctl.s.try_send(ToUI::Spectrogram(sg.image()?));
+        },
+        Quit => break,
+    }}
+
+    h.join().expect("ui thread join");
+    EOK
 }
 
 /*
