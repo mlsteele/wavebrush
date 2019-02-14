@@ -65,6 +65,7 @@ impl Spectrogram {
         let ws = self.settings.window_size;
         let mut img = image::ImageBuffer::new(self.data.len() as u32, ws / 2);
         for (x,column) in self.data.iter().enumerate() {
+            // Show only half the column.
             let morphed: Vec<_> = column[..ws as usize/2].iter().map(|v| v.norm_sqr().log10())
                 .map(|v| if v > 0. {v} else {0.}).collect();
             let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
