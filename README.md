@@ -36,3 +36,4 @@ Painting on spectrograms.
 - http://download.ni.com/evaluation/pxi/Understanding%20FFTs%20and%20Windowing.pdf windows
 - http://www.cs.princeton.edu/~fiebrink/314/2009/week12/FFT_handout.pdf "hop size can be" small
 - https://ccrma.stanford.edu/~jos/parshl/Choice_Hop_Size.html
+- http://recherche.ircam.fr/anasyn/roebel/amt_audiosignale/VL2.pdf
