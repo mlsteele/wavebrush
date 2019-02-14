@@ -86,6 +86,7 @@ fn main() -> EResult {
     }
 
     let mut sg = shredder.sg;
+    let sg_reset = sg.clone();
 
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();
@@ -99,6 +100,7 @@ fn main() -> EResult {
     let imgbuf = sg.image().expect("image");
     let w = imgbuf.width();
     let h = imgbuf.height();
+    println!("sg dimensions {} {}", w, h);
     let factor = 1;
     DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();
@@ -109,17 +111,20 @@ fn main() -> EResult {
     use control::ToBackend::*;
 
     let h = thread::spawn(move || {
-        for msg in ctl.r.iter() { match msg {
+        for msg in ctl.r.iter() {match msg {
             Prod{x, y} => {
-                println!("<- prod");
                 Wrapper::new(&mut sg).airbrush(x, y);
-                let r = ctl.s.try_send(ToUI::Spectrogram(sg.image().expect("render image")));
+                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
             Play => {
                 println!("<- play");
                 if let Err(err) = play(sg.clone()) {
                     println!("play failed: {:?}", err);
                 }
+            },
+            Reset => {
+                sg = sg_reset.clone();
+                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
             Quit => break,
         }}

@@ -19,7 +19,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
-    let img_scale = 2f32;
+    let img_scale = 3f32;
 
     let mut events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);
@@ -69,6 +69,13 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let mut last_frame = Instant::now();
     let mut quit = false;
 
+
+    // Mouse position in imgui screen coordinates
+    let mut mouse_pos;
+    let mut mouse_down: [bool; 5] = Default::default();
+    // Mouse position in image coordinates.
+    let mut mouse_image_pos: Option<(f32, f32)> = None;
+
     loop {
         for msg in ctl.r.try_iter() {
             use ToUI::*;
@@ -99,8 +106,14 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                         input: KeyboardInput{
                             state: Pressed, virtual_keycode:
                             Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
-                    WindowEvent::CursorMoved{position, ..} => {
-                        let _ = ctl.s.try_send(ToBackend::Prod{x: position.x as i32, y: position.y as i32});
+                    WindowEvent::CursorMoved{..} => {
+                        if mouse_down[0] {
+                            if let Some((x, y)) = mouse_image_pos {
+                                ctl.send(ToBackend::Prod{
+                                    x: (x / img_scale) as i32,
+                                    y: spectrogram.height() as i32 - (y / img_scale) as i32});
+                            }
+                        }
                     },
                     _ => (),
                 }
@@ -117,6 +130,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         let frame_size = imgui_winit_support::get_frame_size(&window, hidpi_factor).unwrap();
 
         let ui = imgui.frame(frame_size, delta_s);
+        mouse_pos = ui.imgui().mouse_pos();
+        mouse_down = ui.imgui().mouse_down();
 
         let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
@@ -127,16 +142,25 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
             .build(|| {
                 let pressed = ui.small_button(im_str!("Play"));
                 if pressed {
-                    let _ = ctl.s.try_send(ToBackend::Play);
+                    ctl.send(ToBackend::Play);
+                }
+                let pressed = ui.small_button(im_str!("Reset"));
+                if pressed {
+                    ctl.send(ToBackend::Reset);
                 }
                 ui.separator();
-                let mouse_pos = ui.imgui().mouse_pos();
                 let cursor_pos = ui.get_cursor_pos();
                 let cursor_screen_pos = ui.get_cursor_screen_pos();
-                let mouse_image_pos = (mouse_pos.0 - cursor_screen_pos.0,
-                                       mouse_pos.1 - cursor_screen_pos.1);
-                ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
-                                      spectrogram.height() as f32 * img_scale)).build();
+                ui.child_frame(im_str!("subwindow"),
+                               (spectrogram.width() as f32 * img_scale,
+                                spectrogram.height() as f32 * img_scale))
+                    .movable(false)
+                    .build(|| {
+                        mouse_image_pos = Some((mouse_pos.0 - cursor_screen_pos.0,
+                                                mouse_pos.1 - cursor_screen_pos.1));
+                        ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
+                                            spectrogram.height() as f32 * img_scale)).build();
+                    });
                 ui.separator();
                 ui.text(im_str!(
                     "Mouse Position: ({:.1},{:.1})",
@@ -155,8 +179,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                 ));
                 ui.text(im_str!(
                     "Mouse Position (Image): ({:.1},{:.1})",
-                    mouse_image_pos.0,
-                    mouse_image_pos.1
+                    mouse_image_pos.unwrap().0,
+                    mouse_image_pos.unwrap().1
                 ));
             });
 

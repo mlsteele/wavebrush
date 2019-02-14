@@ -1,35 +1,50 @@
 use crate::spectrogram::*;
 use crossbeam::channel::*;
 
+#[derive(Debug)]
 pub enum ToBackend {
     // Coordinate in image space.
     Prod{x: i32, y: i32},
     Play,
+    Reset,
     Quit,
 }
 
+#[derive(Debug)]
 pub enum ToUI {
     Spectrogram(Img),
 }
 
-pub struct CtlUI {
-    pub s: Sender<ToBackend>,
-    pub r: Receiver<ToUI>,
+pub type CtlUI = FullDuplex<ToUI, ToBackend>;
+pub type CtlBackend = FullDuplex<ToBackend, ToUI>;
+
+pub struct FullDuplex<In,Out> {
+    pub r: Receiver<In>,
+    pub s: Sender<Out>,
 }
 
-pub struct CtlBackend {
-    pub s: Sender<ToUI>,
-    pub r: Receiver<ToBackend>,
+impl<In,Out> FullDuplex<In,Out> {
+    fn new_pair() -> (Self, FullDuplex<Out,In>) {
+        let (s1, r1) = bounded::<In>(10);
+        let (s2, r2) = bounded::<Out>(10);
+        (FullDuplex{
+            r: r1,
+            s: s2,
+        }, FullDuplex{
+            r: r2,
+            s: s1,
+        }) 
+    }
+
+    pub fn send(&self, msg: Out) {
+        if let Err(err) = self.s.try_send(msg) {
+            println!("error sending message: {}", err);
+        }
+    }
 }
 
 pub fn new_ctl() -> (CtlUI, CtlBackend) {
-    let (s1, r1) = bounded::<ToUI>(10);
-    let (s2, r2) = bounded::<ToBackend>(10);
-    return (CtlUI{
-        s: s2,
-        r: r1,
-    }, CtlBackend{
-        s: s1,
-        r: r2,
-    }) 
+    FullDuplex::new_pair()
 }
+
+// let _ = ctl.s.try_send(ToBackend::Prod{x: mouse_image_pos.0 as i32, y: mouse_image_pos.1 as i32});
