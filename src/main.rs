@@ -83,28 +83,36 @@ fn main() -> EResult {
 
     let mut shredder = Shredder::new(settings);
     // Scan one channel of the audio.
+    let mut ax = 0;
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
+        ax += 1;
         let sample: i16 = sample.unwrap();
         let sample_f64: f64 = SampleConvert::convert(sample);
         shredder.append_samples(&[sample_f64]).unwrap();
     }
+    println!("input length : {:?}", ax);
 
     let mut sg = shredder.sg;
     let sg_reset = sg.clone();
 
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();
+    let mut ay = 0;
     while unshredder.output(&mut buf).unwrap() {
         for sample in &buf {
+            ay += 1;
             writer.write_sample(SampleConvert::convert(*sample)).unwrap();
         };
     }
+    println!("output length: {:?}", ay);
 
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
     let imgbuf = sg.image().expect("image");
     let w = imgbuf.width();
     let h = imgbuf.height();
     println!("sg dimensions {} {}", w, h);
+    println!("image length : {}", (step_size as u32) * w);
+    println!("image product: {}", w * h);
     let factor = 1;
     DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
     writer.finalize().unwrap();

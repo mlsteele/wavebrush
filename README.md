@@ -31,3 +31,6 @@ Painting on spectrograms.
 - https://github.com/ocornut/imgui/issues/899
 - https://musiclab.chromeexperiments.com/Spectrogram/
 - https://www.reddit.com/r/DSP/comments/38tntr/creating_music_by_drawing_a_spectrogram_first_and/
+- https://www.dsprelated.com/freebooks/sasp/Overlap_Add_OLA_STFT_Processing.html (constant overlap-add property / partition of unity property)
+- https://www.dsprelated.com/freebooks/sasp/Mathematical_Definition_STFT.html#19930
+- http://download.ni.com/evaluation/pxi/Understanding%20FFTs%20and%20Windowing.pdf windows

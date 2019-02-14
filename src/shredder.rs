@@ -60,7 +60,7 @@ impl Unshredder {
     }
 
     pub fn output_size(&self) -> usize {
-        self.buf_overlap.len()
+        self.settings.step_size as usize
     }
 
     pub fn allocate_output_buf(&self) -> Vec<f64> {
@@ -83,7 +83,9 @@ impl Unshredder {
             }
             // shipit(overlap);
             for (sample, out) in self.buf_overlap.iter().zip(buf_out.iter_mut()) {
-                *out = sample.re / self.ws() as f64;
+                // The overlap-add of the window at hop-size is equal numerically
+                // to the dc gain of the window divided by the step size.
+                *out = sample.re / self.settings.step_size as f64;
             };
             // overlap = scratch[w-s..];
             self.buf_overlap.copy_from_slice(&self.scratch[self.settings.step_size as usize..]);
