@@ -36,7 +36,7 @@ impl<'a> Wrapper<'a> {
     }
 
     pub fn airbrush(&mut self, x: i32, y: i32) {
-        let brush = 5;
+        let brush = 14;
         for dx in -brush..brush {
             for dy in -brush..brush {
                 let brush_r2 = (dx as f64).powf(2.) + (dy as f64).powf(2.);
@@ -44,7 +44,7 @@ impl<'a> Wrapper<'a> {
                 let y = y + dy;
                 self.effect_dual(x, y, |v, _| {
                     let (mut r, theta) = v.to_polar();
-                    r += 2. * 1. / (brush_r2+1.);
+                    r += 5. * 1. / (brush_r2+1.);
                     *v = Complex::from_polar(&r, &theta);
                 });
             }

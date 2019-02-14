@@ -19,7 +19,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
-    let img_scale = 5f32;
+    let img_scale = 1f32;
 
     let mut events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);

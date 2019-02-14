@@ -15,6 +15,8 @@ pub struct Settings {
     pub sample_rate: u32,
     /// FFT size in samples
     pub window_size: u32,
+    /// Samples between each window start.
+    pub step_size: u32,
 }
 
 /// More than just a spectrogram.

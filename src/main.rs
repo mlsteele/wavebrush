@@ -64,10 +64,10 @@ fn main() -> EResult {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(8); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(10); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
-    let step_size: usize = window_size / 2;
+    let step_size: usize = window_size / 16;
     // let step_size: usize = 16;
     // let step_size: usize = reader_spec.sample_rate as usize / 4;
     // let step_size: usize = 32;
@@ -78,6 +78,7 @@ fn main() -> EResult {
     let settings = Settings{
         sample_rate: reader_spec.sample_rate,
         window_size: window_size as u32,
+        step_size: step_size as u32,
     };
 
     let mut shredder = Shredder::new(settings);

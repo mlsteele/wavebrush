@@ -17,10 +17,9 @@ pub struct Shredder {
 
 impl Shredder {
     pub fn new(settings: Settings) -> Self {
-        let step_size = settings.window_size / 2;
         Self {
             stft: STFT::new(WindowType::Hanning,
-                            settings.window_size as usize, step_size as usize),
+                            settings.window_size as usize, settings.step_size as usize),
             sg: Spectrogram::new(settings),
         }
     }
@@ -40,7 +39,6 @@ impl Shredder {
 /// Output audio from a spectrogram.
 pub struct Unshredder {
     settings: Settings,
-    step_size: usize,
     ifft: Arc<FFT<f64>>,
     src: VecDeque<Column>,
     buf_overlap: Vec<Complex<f64>>,
@@ -51,11 +49,9 @@ impl Unshredder {
     pub fn new(sg: Spectrogram) -> Self {
         let (settings, src) = sg.explode();
         let ws = settings.window_size as usize;
-        let step_size = ws / 2;
-        let overlap_size = ws - step_size;
+        let overlap_size = ws - settings.step_size as usize;
         Self {
             settings: settings,
-            step_size: step_size,
             ifft: FFTplanner::<f64>::new(true).plan_fft(ws as usize),
             src: src,
             buf_overlap: vec![Default::default(); overlap_size],
@@ -82,7 +78,7 @@ impl Unshredder {
             Self::filter(&mut column);
             self.ifft.process(&mut column, &mut self.scratch);
             // overlap += scratch[..w-s];
-            for i in 0..self.ws()-self.step_size {
+            for i in 0..self.ws()-self.settings.step_size as usize {
                 self.buf_overlap[i] += self.scratch[i];
             }
             // shipit(overlap);
@@ -90,7 +86,7 @@ impl Unshredder {
                 *out = sample.re / self.ws() as f64;
             };
             // overlap = scratch[w-s..];
-            self.buf_overlap.copy_from_slice(&self.scratch[self.step_size..]);
+            self.buf_overlap.copy_from_slice(&self.scratch[self.settings.step_size as usize..]);
             Ok(true)
         } else {
             Ok(false)
