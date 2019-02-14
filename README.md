@@ -34,3 +34,5 @@ Painting on spectrograms.
 - https://www.dsprelated.com/freebooks/sasp/Overlap_Add_OLA_STFT_Processing.html (constant overlap-add property / partition of unity property)
 - https://www.dsprelated.com/freebooks/sasp/Mathematical_Definition_STFT.html#19930
 - http://download.ni.com/evaluation/pxi/Understanding%20FFTs%20and%20Windowing.pdf windows
+- http://www.cs.princeton.edu/~fiebrink/314/2009/week12/FFT_handout.pdf "hop size can be" small
+- https://ccrma.stanford.edu/~jos/parshl/Choice_Hop_Size.html

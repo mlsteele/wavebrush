@@ -62,11 +62,12 @@ fn main() -> EResult {
     out_spec.channels = 1;
     let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
 
-    let window_type: WindowType = WindowType::Hanning;
+    let window_type: WindowType = WindowType::None;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
     let window_size: usize = (2 as usize).pow(10); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
+    // let step_size: usize = (window_size / 2) / 8;
     let step_size: usize = window_size / 16;
     // let step_size: usize = 16;
     // let step_size: usize = reader_spec.sample_rate as usize / 4;
