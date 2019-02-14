@@ -1,17 +1,6 @@
 /// For a float [0, 1] get [R, G, B] as byte values.
 pub fn ramp(v: f64) -> [u8; 3] {
-    TAB[flatten(TAB.binary_search_by(|(x, _)| {
-        use std::cmp::Ordering::*;
-        if *x < v {
-            Less
-        } else {
-            if *x == v {
-                Equal
-            } else {
-                Greater
-            }
-        }
-    })).min(TAB.len()-1)].1
+    TAB[((v * 1024.).max(0.) as usize).min(TAB.len()-1)].1
 }
 
 fn flatten<T>(x: std::result::Result<T,T>) -> T {
