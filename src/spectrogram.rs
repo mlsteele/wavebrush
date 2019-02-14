@@ -1,8 +1,9 @@
 use num::complex::Complex;
 use std::collections::vec_deque::VecDeque;
+use std::f64;
 use crate::error::*;
 use crate::util::*;
-use std::f64;
+use crate::colorramp::*;
 
 type V = Complex<f64>;
 type Column = Vec<V>;
@@ -75,11 +76,7 @@ impl Spectrogram {
             for (i, &v) in morphed.iter().enumerate() {
                 let sv = rescale(v, min, max, 0., 1.);
                 let pixel = img.get_pixel_mut(x as u32, img.height()-1-i as u32);
-                *pixel = image::Rgb([
-                    rescale(sv, 0., 1., 0., 245.) as u8 + 10,
-                    rescale(sv, 0., 1., 0., 190.) as u8,
-                    rescale(sv, 0., 1., 0., 80.) as u8 + 20,
-                ]);
+                *pixel = image::Rgb(ramp(sv));
             }
         }
         Ok(img)

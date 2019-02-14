@@ -29,3 +29,5 @@ Painting on spectrograms.
 - https://stackoverflow.com/questions/4364823/how-do-i-obtain-the-frequencies-of-each-value-in-an-fft
 - https://dsp.stackexchange.com/questions/18036/interpreting-magnitude-of-dft-results
 - https://github.com/ocornut/imgui/issues/899
+- https://musiclab.chromeexperiments.com/Spectrogram/
+- https://www.reddit.com/r/DSP/comments/38tntr/creating_music_by_drawing_a_spectrogram_first_and/

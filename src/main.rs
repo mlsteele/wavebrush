@@ -25,6 +25,9 @@ mod ui;
 use ui::*;
 
 #[allow(dead_code)]
+mod colorramp;
+
+#[allow(dead_code)]
 mod spectrogram;
 use spectrogram::*;
 
