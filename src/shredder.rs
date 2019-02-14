@@ -85,7 +85,7 @@ impl Unshredder {
             for (sample, out) in self.buf_overlap.iter().zip(buf_out.iter_mut()) {
                 // The overlap-add of the window at hop-size is equal numerically
                 // to the dc gain of the window divided by the step size.
-                *out = sample.re / self.settings.step_size as f64;
+                *out = sample.re / self.ws() as f64;
             };
             // overlap = scratch[w-s..];
             self.buf_overlap.copy_from_slice(&self.scratch[self.settings.step_size as usize..]);
