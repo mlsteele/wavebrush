@@ -36,7 +36,7 @@ impl<'a> Wrapper<'a> {
     }
 
     pub fn airbrush(&mut self, x: i32, y: i32) {
-        let weight = 0.2;
+        let weight = 0.8;
         let harmonics = 20;
         for i in 0..harmonics {
             self.airbrush2(

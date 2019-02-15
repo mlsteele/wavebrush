@@ -71,12 +71,13 @@ impl Spectrogram {
             // Show only half the column.
             let morphed: Vec<_> = column[..ws as usize/2].iter().map(|v| v.norm_sqr().log10())
                 .map(|v| if v > 0. {v} else {0.}).collect();
-            let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
-            let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+            // let min = morphed.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+            // let max = morphed.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
             // let morphed: Vec<_> = column[..ws as usize/2].iter().map(|v| v.norm_sqr().log10())
             //     .map(|v| if v > 0. {v} else {0.}).collect();
             for (i, &v) in morphed.iter().enumerate() {
-                let sv = rescale(v, min, max, 0., 1.);
+                // let sv = rescale(v, min, max, 0., 1.);
+                let sv = v;
                 let pixel = img.get_pixel_mut(x as u32, img.height()-1-i as u32);
                 *pixel = image::Rgb(ramp(sv));
             }
