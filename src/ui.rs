@@ -3,13 +3,14 @@ use glium::{
     texture::{ClientFormat, RawImage2d},
     Texture2d,
 };
-use imgui::{FontGlyphRange, ImFontConfig, ImGui, Ui};
+use imgui::{FontGlyphRange, ImFontConfig, ImGui, Ui, ImString};
 use imgui_winit_support;
 use std::rc::Rc;
 use std::time::Instant;
 use std::borrow::Cow;
 use image;
 use crate::control::*;
+use std::collections::*;
 
 const CLEAR_COLOR: [f32; 4] = [0.01, 0.01, 0.01, 1.];
 
@@ -76,6 +77,14 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     // Mouse position in image coordinates.
     let mut mouse_image_pos: Option<(f32, f32)> = None;
 
+    let mut sliders = SliderBank::new();
+    sliders.add("weight", "Weight", 2.1, 0.1, 20.);
+    sliders.add("size", "Brush size", 8., 1., 40.);
+    sliders.add("fade_expr", "Fade factor", 1.9, 1., 10.);
+    sliders.add("copies", "Copies", 20., 1., 100.);
+    sliders.add("distance_linear", "Distance (lin)", 30., 1., 200.);
+    sliders.add("distance_exp", "Distance (exp)", 1.1, 1., 10.);
+
     loop {
         for msg in ctl.r.try_iter() {
             use ToUI::*;
@@ -125,6 +134,12 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
             }
         });
 
+        if sliders.event() {
+            if let Some(weight) = sliders.get("weight") {
+                ctl.send(ToBackend::Weight(weight));
+            }
+        }
+
         let now = Instant::now();
         let delta = now - last_frame;
         let delta_s = delta.as_secs() as f32 + delta.subsec_nanos() as f32 / 1_000_000_000.0;
@@ -154,6 +169,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                 if ui.small_button(im_str!("Save")) {
                     ctl.send(ToBackend::Save);
                 }
+                sliders.draw(&ui);
                 ui.separator();
                 let cursor_pos = ui.get_cursor_pos();
                 let cursor_screen_pos = ui.get_cursor_screen_pos();
@@ -215,4 +231,53 @@ where F: Facade {
         format: ClientFormat::U8U8U8,
     };
     Texture2d::new(gl_ctx, raw).unwrap()
+}
+
+struct SliderBankEntry {
+    label: ImString,
+    value: f32,
+    min: f32,
+    max: f32,
+}
+
+struct SliderBank {
+    event: bool,
+    map: HashMap<String,SliderBankEntry>,
+}
+
+impl SliderBank {
+    pub fn new() -> Self {
+        Self {
+            event: false,
+            map: Default::default()
+        }
+    }
+    pub fn add(&mut self, key: &str, label: &str, default: f64, min: f64, max: f64) {
+        self.map.insert(key.to_owned(), SliderBankEntry{
+            label: ImString::new(label),
+            value: default as f32,
+            min: min as f32,
+            max: max as f32,
+        });
+        self.event = true;
+    }
+
+    pub fn get(&self, key: &str) -> Option<f64> {
+        self.map.get(key).map(|SliderBankEntry{value,..}| *value as f64)
+    }
+
+    /// Return whether new values are ready.
+    /// And mark them as read.
+    pub fn event(&mut self) -> bool {
+        std::mem::replace(&mut self.event, false)
+    }
+
+    pub fn draw(&mut self, ui: &imgui::Ui) {
+        use imgui::{im_str};
+        for (_, slider) in self.map.iter_mut() {
+            if ui.slider_float(&slider.label, &mut slider.value, slider.min, slider.max).build() {
+                self.event = true;
+            }
+        }
+    }
 }

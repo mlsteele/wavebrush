@@ -6,6 +6,7 @@ pub enum ToBackend {
     // Coordinate in image space.
     Prod{x: i32, y: i32},
     Erase{x: i32, y: i32},
+    Weight(f64),
     Play,
     Save,
     Reset,
@@ -27,8 +28,9 @@ pub struct FullDuplex<In,Out> {
 
 impl<In,Out> FullDuplex<In,Out> {
     fn new_pair() -> (Self, FullDuplex<Out,In>) {
-        let (s1, r1) = bounded::<In>(10);
-        let (s2, r2) = bounded::<Out>(10);
+        let bound = 50;
+        let (s1, r1) = bounded::<In>(bound);
+        let (s2, r2) = bounded::<Out>(bound);
         (FullDuplex{
             r: r1,
             s: s2,

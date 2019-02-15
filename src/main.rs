@@ -134,6 +134,9 @@ fn main() -> EResult {
                 Wrapper::new(&mut sg).erase(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
+            Weight(weight) => {
+                dbg!(weight);
+            },
             Play => {
                 println!("<- play");
                 if let Err(err) = play(sg.clone()) {
