@@ -64,7 +64,7 @@ fn main() -> EResult {
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(10); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(7); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     // let step_size: usize = (window_size / 2) / 8;

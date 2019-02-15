@@ -19,14 +19,14 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
-    let img_scale = 1f32;
+    let img_scale = 5.5f32;
 
     let mut events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
         .with_dimensions(glutin::dpi::LogicalSize::new(
-            spectrogram.width() as f64 * img_scale as f64,
+            spectrogram.width() as f64 * img_scale as f64 - 300.,
             spectrogram.height() as f64 * img_scale as f64));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
