@@ -5,7 +5,9 @@ use crossbeam::channel::*;
 pub enum ToBackend {
     // Coordinate in image space.
     Prod{x: i32, y: i32},
+    Erase{x: i32, y: i32},
     Play,
+    Save,
     Reset,
     Quit,
 }

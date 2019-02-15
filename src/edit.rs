@@ -36,12 +36,21 @@ impl<'a> Wrapper<'a> {
     }
 
     pub fn airbrush(&mut self, x: i32, y: i32) {
-        let weight = 0.8;
+        self.multibrush(x, y, 2.);
+    }
+
+    pub fn erase(&mut self, x: i32, y: i32) {
+        self.multibrush(x, y, -1.);
+    }
+
+    fn multibrush(&mut self, x: i32, y: i32, factor: f64) {
+        let weight = 2.1 * factor;
         let harmonics = 20;
         for i in 0..harmonics {
             self.airbrush2(
-                x, (y as f64 * 1.9f64.powf(i as f64)) as i32,
-                weight / (1.5f64).powf(i as f64));
+                // x, (y as f64 * 1.9f64.powf(i as f64)) as i32,
+                x, (y as f64 + (30. * i as f64 * (1.1f64).powf(i as f64)) as f64) as i32,
+                weight / (1.9f64).powf(i as f64));
         }
     }
 

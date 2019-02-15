@@ -19,15 +19,15 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     use glium::glutin;
     use glium::{Display, Surface};
     use imgui_glium_renderer::Renderer;
-    let img_scale = 5.5f32;
+    let img_scale = 1.5f32;
 
     let mut events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
         .with_dimensions(glutin::dpi::LogicalSize::new(
-            spectrogram.width() as f64 * img_scale as f64 - 300.,
-            spectrogram.height() as f64 * img_scale as f64));
+            spectrogram.width() as f64 * img_scale as f64,
+            spectrogram.height() as f64 * img_scale as f64 + 200.));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
@@ -107,11 +107,16 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                             state: Pressed, virtual_keycode:
                             Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
                     WindowEvent::CursorMoved{..} => {
-                        if mouse_down[0] {
+                        if mouse_down[0] || mouse_down[1] {
                             if let Some((x, y)) = mouse_image_pos {
-                                ctl.send(ToBackend::Prod{
-                                    x: (x / img_scale) as i32,
-                                    y: spectrogram.height() as i32 - (y / img_scale) as i32});
+                                // xxx weird x reversal
+                                let x = spectrogram.width() as i32 - (x / img_scale) as i32;
+                                let y = spectrogram.height() as i32 - (y / img_scale) as i32;
+                                if mouse_down[0] {
+                                    ctl.send(ToBackend::Prod{x, y});
+                                } else {
+                                    ctl.send(ToBackend::Erase{x, y});
+                                }
                             }
                         }
                     },
@@ -140,13 +145,14 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
             .size((spectrogram.width() as f32 * img_scale + 100.,
                    spectrogram.height() as f32 * img_scale + 200.), cond)
             .build(|| {
-                let pressed = ui.small_button(im_str!("Play"));
-                if pressed {
+                if ui.small_button(im_str!("Play")) {
                     ctl.send(ToBackend::Play);
                 }
-                let pressed = ui.small_button(im_str!("Reset"));
-                if pressed {
+                if ui.small_button(im_str!("Reset")) {
                     ctl.send(ToBackend::Reset);
+                }
+                if ui.small_button(im_str!("Save")) {
+                    ctl.send(ToBackend::Save);
                 }
                 ui.separator();
                 let cursor_pos = ui.get_cursor_pos();

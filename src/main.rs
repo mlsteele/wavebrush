@@ -50,21 +50,24 @@ use std::f64::consts::PI;
 use sample::{SampleConvert,*};
 use util::*;
 use std::thread;
+use std::env;
 
 #[allow(unused_variables)]
 fn main() -> EResult {
-    let reader = hound::WavReader::open("shortspeech.wav").unwrap();
+    let args: Vec<String> = env::args().collect();
+    let filename = args.get(1).map(|x| x.to_owned()).unwrap_or_else(|| "card.wav".to_owned());
+
+    let reader = hound::WavReader::open(filename).unwrap();
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
 
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
-    let mut writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
 
     let window_type: WindowType = WindowType::Hanning;
     // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
-    let window_size: usize = (2 as usize).pow(7); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     // let step_size: usize = (window_size / 2) / 8;
@@ -102,14 +105,12 @@ fn main() -> EResult {
     while unshredder.output(&mut buf).unwrap() {
         for sample in &buf {
             ay += 1;
-            writer.write_sample(SampleConvert::convert(*sample)).unwrap();
         };
     }
-    writer.finalize().unwrap();
     println!("output length: {:?}", ay);
 
     // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
-    let imgbuf = sg.image().expect("image");
+    let imgbuf = sg.image()?;
     let w = imgbuf.width();
     let h = imgbuf.height();
     println!("sg dimensions {} {}", w, h);
@@ -129,10 +130,23 @@ fn main() -> EResult {
                 Wrapper::new(&mut sg).airbrush(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
+            Erase{x, y} => {
+                Wrapper::new(&mut sg).erase(x, y);
+                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+            },
             Play => {
                 println!("<- play");
                 if let Err(err) = play(sg.clone()) {
                     println!("play failed: {:?}", err);
+                }
+            },
+            Save => {
+                println!("<- save");
+                let writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+                if let Err(err) = save(sg.clone(), writer) {
+                    println!("save failed: {:?}", err);
+                } else {
+                    println!("save complete");
                 }
             },
             Reset => {
@@ -160,6 +174,20 @@ fn play(sg: Spectrogram) -> EResult {
     }
     let src = rodio::buffer::SamplesBuffer::new(1, sg.settings.sample_rate, buf_all);
     rodio::play_raw(&device, src.convert_samples());
+    EOK
+}
+
+fn save<T>(sg: Spectrogram, mut writer: hound::WavWriter<T>) -> EResult
+    where T: std::io::Write + std::io::Seek
+{
+    let mut unshredder = Unshredder::new(sg.clone());
+    let mut buf = unshredder.allocate_output_buf();
+    while unshredder.output(&mut buf).unwrap() {
+        for sample in &buf {
+            writer.write_sample(SampleConvert::convert(*sample)).unwrap();
+        };
+    }
+    writer.finalize().unwrap();
     EOK
 }
 

@@ -78,7 +78,8 @@ impl Spectrogram {
             for (i, &v) in morphed.iter().enumerate() {
                 // let sv = rescale(v, min, max, 0., 1.);
                 let sv = v;
-                let pixel = img.get_pixel_mut(x as u32, img.height()-1-i as u32);
+                // xxx weird reversal of x
+                let pixel = img.get_pixel_mut(img.width()-1-x as u32, img.height()-1-i as u32);
                 *pixel = image::Rgb(ramp(sv));
             }
         }
