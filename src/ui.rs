@@ -23,12 +23,13 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let img_scale = 1.5f32;
 
     let mut events_loop = glutin::EventsLoop::new();
+    let hidpi_factor = events_loop.get_primary_monitor().get_hidpi_factor();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
         .with_dimensions(glutin::dpi::LogicalSize::new(
-            spectrogram.width() as f64 * img_scale as f64,
-            spectrogram.height() as f64 * img_scale as f64 + 200.));
+            spectrogram.width() as f64 * img_scale as f64 + 100.,
+            spectrogram.height() as f64 * img_scale as f64 + 500.));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
@@ -36,7 +37,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     imgui.set_ini_filename(None);
 
     // let hidpi_factor = window.get_hidpi_factor().round();
-    let hidpi_factor = 2.;
+    // let hidpi_factor = 2.;
 
     let font_size = (18.0 * hidpi_factor) as f32;
 
@@ -161,8 +162,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         use imgui::{im_str,ImGuiCond};
         ui.window(im_str!("Wavebrush"))
             .position((5.,5.), cond)
-            .size((spectrogram.width() as f32 * img_scale + 100.,
-                   spectrogram.height() as f32 * img_scale + 200.), cond)
+            .size((spectrogram.width() as f32 * img_scale + 50.,
+                   spectrogram.height() as f32 * img_scale + 500.), cond)
             .build(|| {
                 if ui.small_button(im_str!("Play")) {
                     ctl.send(ToBackend::Play);
