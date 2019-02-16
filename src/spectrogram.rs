@@ -47,11 +47,6 @@ impl Spectrogram {
         EOK
     }
 
-    /// Drop a column.
-    pub fn drop_front(&mut self) {
-        self.data.pop_front();
-    }
-
     pub fn get_mut(&mut self, x: i32, y: i32) -> Option<&mut V> {
         if x < 0 || y < 0 {
             return None

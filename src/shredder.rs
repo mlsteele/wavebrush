@@ -74,7 +74,7 @@ impl Unshredder {
     /// If false, no more output will ever come.
     pub fn output(&mut self, buf_out: &mut [f64]) -> Result<bool> {
         ensure!(buf_out.len() == self.output_size(), "output buf size");
-        if let Some(mut column) = self.src.pop_back() {
+        if let Some(mut column) = self.src.pop_front() {
             Self::filter(&mut column);
             self.ifft.process(&mut column, &mut self.scratch);
             // overlap += scratch[..w-s];
