@@ -29,7 +29,7 @@ impl Shredder {
         self.stft.append_samples(input);
         while self.stft.contains_enough_to_compute() {
             self.stft.compute_into_complex_output();
-            self.sg.push_front(self.stft.complex_output.clone())?;
+            self.sg.push_back(self.stft.complex_output.clone())?;
             self.stft.move_to_next_column();
         }
         EOK

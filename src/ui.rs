@@ -118,8 +118,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                     WindowEvent::CursorMoved{..} => {
                         if mouse_down[0] || mouse_down[1] {
                             if let Some((x, y)) = mouse_image_pos {
-                                // xxx weird x reversal
-                                let x = spectrogram.width() as i32 - (x / img_scale) as i32;
+                                let x = (x / img_scale) as i32;
                                 let y = spectrogram.height() as i32 - (y / img_scale) as i32;
                                 if mouse_down[0] {
                                     ctl.send(ToBackend::Prod{x, y});

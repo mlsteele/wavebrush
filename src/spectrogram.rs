@@ -40,16 +40,16 @@ impl Spectrogram {
     }
 
     /// Push a column of FFT values.
-    pub fn push_front(&mut self, column: Column) -> EResult {
+    pub fn push_back(&mut self, column: Column) -> EResult {
         ensure!(column.len() == self.settings.window_size as usize,
                 "unexpected column size {} != {}", column.len(), self.settings.window_size);
-        self.data.push_front(column);
+        self.data.push_back(column);
         EOK
     }
 
     /// Drop a column.
-    pub fn drop_back(&mut self) {
-        self.data.pop_back();
+    pub fn drop_front(&mut self) {
+        self.data.pop_front();
     }
 
     pub fn get_mut(&mut self, x: i32, y: i32) -> Option<&mut V> {
@@ -82,8 +82,7 @@ impl Spectrogram {
             for (i, &v) in morphed.iter().enumerate() {
                 // let sv = rescale(v, min, max, 0., 1.);
                 let sv = v;
-                // xxx weird reversal of x
-                let pixel = img.get_pixel_mut(img.width()-1-x as u32, img.height()-1-i as u32);
+                let pixel = img.get_pixel_mut(x as u32, img.height()-1-i as u32);
                 *pixel = image::Rgb(ramp(sv));
             }
         }
