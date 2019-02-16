@@ -109,15 +109,7 @@ fn main() -> EResult {
     }
     println!("output length: {:?}", ay);
 
-    // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
     let imgbuf = sg.image()?;
-    let w = imgbuf.width();
-    let h = imgbuf.height();
-    println!("sg dimensions {} {}", w, h);
-    println!("image length : {}", (step_size as u32) * w);
-    println!("image product: {}", w * h);
-    let factor = 1;
-    DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
 
     let (uictl, ctl) = new_ctl();
 
@@ -151,12 +143,24 @@ fn main() -> EResult {
             },
             Save => {
                 println!("<- save");
+
+                // Sav wav
                 let writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
                 if let Err(err) = save(sg.clone(), writer) {
                     println!("save failed: {:?}", err);
                 } else {
                     println!("save complete");
                 }
+
+                // Save image
+                // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
+                let imgbuf = sg.image().expect("image");
+                let w = imgbuf.width();
+                let h = imgbuf.height();
+                println!("sg dimensions {} {}", w, h);
+                // let factor = 1;
+                // DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
+                imgbuf.clone().save("tmp/out.png").unwrap();
             },
             Reset => {
                 sg = sg_reset.clone();

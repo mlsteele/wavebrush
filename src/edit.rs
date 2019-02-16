@@ -83,8 +83,14 @@ impl<'a> Wrapper<'a> {
                 // Simulate phase recovery.
                 let freq = fft_freq(i,
                     st.sample_rate as usize, st.window_size as usize);
+                // let r = if i == st.window_size as usize - 5 {
+                //     100.
+                // } else {
+                //     0.
+                // };
+                let r = 0.;
                 let theta = -2. * PI * frame as f64 / st.sample_rate as f64 * freq;
-                *v = Complex::from_polar(&0., &theta);
+                *v = Complex::from_polar(&r, &theta);
             }
         }
     }
