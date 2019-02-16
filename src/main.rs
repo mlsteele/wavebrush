@@ -136,6 +136,10 @@ fn main() -> EResult {
                 Wrapper::new(&mut sg, &sliders).erase(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
+            Nuke => {
+                Wrapper::new(&mut sg, &sliders).nuke();
+                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+            },
             Sliders(s) => {
                 sliders = s;
             },

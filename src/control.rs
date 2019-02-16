@@ -10,6 +10,7 @@ pub enum ToBackend {
     Play,
     Save,
     Reset,
+    Nuke,
     Quit,
 }
 

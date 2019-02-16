@@ -171,6 +171,9 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                 if ui.small_button(im_str!("Reset")) {
                     ctl.send(ToBackend::Reset);
                 }
+                if ui.small_button(im_str!("Nuke")) {
+                    ctl.send(ToBackend::Nuke);
+                }
                 if ui.small_button(im_str!("Save")) {
                     ctl.send(ToBackend::Save);
                 }

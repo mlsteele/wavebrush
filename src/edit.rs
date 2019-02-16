@@ -1,6 +1,8 @@
 use crate::spectrogram::*;
 use num::complex::Complex;
 use crate::control::Sliders;
+use crate::util::*;
+use std::f64::consts::*;
 
 type V = Complex<f64>;
 
@@ -73,4 +75,18 @@ impl<'a> Wrapper<'a> {
             }
         }
     }
+
+    pub fn nuke(&mut self) {
+        let st = self.sp.settings.clone();
+        for (frame, column) in self.sp.data_mut().iter_mut().enumerate() {
+            for (i, v) in column.iter_mut().enumerate() {
+                // Simulate phase recovery.
+                let freq = fft_freq(i,
+                    st.sample_rate as usize, st.window_size as usize);
+                let theta = -2. * PI * frame as f64 / st.sample_rate as f64 * freq;
+                *v = Complex::from_polar(&0., &theta);
+            }
+        }
+    }
+
 }

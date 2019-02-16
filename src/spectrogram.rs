@@ -63,6 +63,10 @@ impl Spectrogram {
         }
     }
 
+    pub fn data_mut(&mut self) -> &mut VecDeque<Column> {
+        &mut self.data
+    }
+
     pub fn image(&self) -> Result<Img> {
         ensure!(self.data.len() > 0, "cannot create image from empty spectrogram");
         let ws = self.settings.window_size;
