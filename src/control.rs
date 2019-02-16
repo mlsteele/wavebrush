@@ -6,7 +6,7 @@ pub enum ToBackend {
     // Coordinate in image space.
     Prod{x: i32, y: i32},
     Erase{x: i32, y: i32},
-    Weight(f64),
+    Sliders(Sliders),
     Play,
     Save,
     Reset,
@@ -20,6 +20,16 @@ pub enum ToUI {
 
 pub type CtlUI = FullDuplex<ToUI, ToBackend>;
 pub type CtlBackend = FullDuplex<ToBackend, ToUI>;
+
+#[derive(Debug, Default)]
+pub struct Sliders {
+    pub weight: f64,
+    pub size: f64,
+    pub fade_exp: f64,
+    pub copies: i32,
+    pub distance_linear: f64,
+    pub distance_exp: f64,
+}
 
 pub struct FullDuplex<In,Out> {
     pub r: Receiver<In>,

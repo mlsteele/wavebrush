@@ -1,16 +1,19 @@
 use crate::spectrogram::*;
 use num::complex::Complex;
+use crate::control::Sliders;
 
 type V = Complex<f64>;
 
 pub struct Wrapper<'a> {
-    sp: &'a mut Spectrogram
+    sp: &'a mut Spectrogram,
+    sliders: &'a Sliders,
 }
 
 impl<'a> Wrapper<'a> {
-    pub fn new(sp: &'a mut Spectrogram) -> Self {
+    pub fn new(sp: &'a mut Spectrogram, sliders: &'a Sliders) -> Self {
         Self {
             sp: sp,
+            sliders: sliders,
         }
     }
 
@@ -44,18 +47,19 @@ impl<'a> Wrapper<'a> {
     }
 
     fn multibrush(&mut self, x: i32, y: i32, factor: f64) {
-        let weight = 2.1 * factor;
-        let harmonics = 20;
+        let weight = self.sliders.weight * factor;
+        let harmonics = self.sliders.copies;
         for i in 0..harmonics {
             self.airbrush2(
                 // x, (y as f64 * 1.9f64.powf(i as f64)) as i32,
-                x, (y as f64 + (30. * i as f64 * (1.1f64).powf(i as f64)) as f64) as i32,
-                weight / (1.9f64).powf(i as f64));
+                x, (y as f64 + (self.sliders.distance_linear * i as f64
+                                * self.sliders.distance_exp.powf(i as f64)) as f64) as i32,
+                weight / self.sliders.fade_exp.powf(i as f64));
         }
     }
 
     fn airbrush2(&mut self, x: i32, y: i32, weight: f64) {
-        let size = 8;
+        let size = self.sliders.size as i32;
         for dx in -size..size {
             for dy in -size..size {
                 let brush_r2 = (dx as f64).powf(2.) + (dy as f64).powf(2.);

@@ -36,7 +36,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     imgui.set_ini_filename(None);
 
     // let hidpi_factor = window.get_hidpi_factor().round();
-    let hidpi_factor = 1.;
+    let hidpi_factor = 2.;
 
     let font_size = (18.0 * hidpi_factor) as f32;
 
@@ -80,7 +80,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let mut sliders = SliderBank::new();
     sliders.add("weight", "Weight", 2.1, 0.1, 20.);
     sliders.add("size", "Brush size", 8., 1., 40.);
-    sliders.add("fade_expr", "Fade factor", 1.9, 1., 10.);
+    sliders.add("fade_exp", "Fade factor", 1.9, 1., 10.);
     sliders.add("copies", "Copies", 20., 1., 100.);
     sliders.add("distance_linear", "Distance (lin)", 30., 1., 200.);
     sliders.add("distance_exp", "Distance (exp)", 1.1, 1., 10.);
@@ -135,9 +135,14 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         });
 
         if sliders.event() {
-            if let Some(weight) = sliders.get("weight") {
-                ctl.send(ToBackend::Weight(weight));
-            }
+            ctl.send(ToBackend::Sliders(Sliders{
+                weight: sliders.get("weight").unwrap(),
+                size: sliders.get("size").unwrap(),
+                fade_exp: sliders.get("fade_exp").unwrap(),
+                copies: sliders.get("copies").unwrap() as i32,
+                distance_linear: sliders.get("distance_linear").unwrap(),
+                distance_exp: sliders.get("distance_exp").unwrap(),
+            }));
         }
 
         let now = Instant::now();

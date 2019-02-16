@@ -125,17 +125,19 @@ fn main() -> EResult {
     use control::ToBackend::*;
 
     let h = thread::spawn(move || {
+        use control::Sliders;
+        let mut sliders: Sliders = Default::default();
         for msg in ctl.r.iter() {match msg {
             Prod{x, y} => {
-                Wrapper::new(&mut sg).airbrush(x, y);
+                Wrapper::new(&mut sg, &sliders).airbrush(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
             Erase{x, y} => {
-                Wrapper::new(&mut sg).erase(x, y);
+                Wrapper::new(&mut sg, &sliders).erase(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
             },
-            Weight(weight) => {
-                dbg!(weight);
+            Sliders(s) => {
+                sliders = s;
             },
             Play => {
                 println!("<- play");
