@@ -14,3 +14,13 @@ pub fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
         sample_rate as f64 - base
     }
 }
+
+#[macro_export] macro_rules! ensure_eq {
+    ($a:expr, $b:expr, $desc:expr) => (
+        let va = $a;
+        let vb = $b;
+        if va != vb {
+            bail!("assertion failed: {}: [{} == {}] [{} == {}]", $desc, va, vb, stringify!($a), stringify!($b));
+        }
+    )
+}

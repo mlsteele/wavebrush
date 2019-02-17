@@ -60,7 +60,7 @@ fn main() -> EResult {
     let reader = hound::WavReader::open(filename).context("reading input wav")?;
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
-    assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
+    ensure_eq!(reader_spec.bits_per_sample, 16, ""); // type inference is used to convert samples
 
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
