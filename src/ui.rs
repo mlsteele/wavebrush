@@ -30,7 +30,6 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         .with_dimensions(glutin::dpi::LogicalSize::new(
             spectrogram.width() as f64 * img_scale as f64 + 100.,
             spectrogram.height() as f64 * img_scale as f64 + 500.));
-    let display = Display::new(builder, context, &events_loop).unwrap();
 }
 
 fn texture_from_image<F>(img: &SpectroImage, gl_ctx: &F) -> Texture2d
