@@ -1,9 +1,11 @@
 use crate::spectrogram::*;
 use crossbeam::channel::*;
+use num::Complex;
 
 #[derive(Debug)]
 pub enum ToBackend {
     // Coordinate in image space.
+    Info{x: i32, y: i32},
     Prod{x: i32, y: i32},
     Erase{x: i32, y: i32},
     Sliders(Sliders),
@@ -17,6 +19,11 @@ pub enum ToBackend {
 #[derive(Debug)]
 pub enum ToUI {
     Spectrogram(Img),
+    Info{
+        freq: f64,
+        a: Complex<f64>,
+        b: Complex<f64>,
+    },
 }
 
 pub type CtlUI = FullDuplex<ToUI, ToBackend>;

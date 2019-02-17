@@ -86,6 +86,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     sliders.add("distance_linear", "Distance (lin)", 30., 1., 200.);
     sliders.add("distance_exp", "Distance (exp)", 1.1, 1., 10.);
 
+    let mut point_info = None;
+
     loop {
         for msg in ctl.r.try_iter() {
             use ToUI::*;
@@ -93,6 +95,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                 Spectrogram(img) => {
                     let _ = renderer.textures().replace(texture_id, texture_from_image(&img, &display));
                 },
+                x@Info{..} => point_info = Some(x),
             }
         }
 
@@ -117,16 +120,15 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                             state: Pressed, virtual_keycode:
                             Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
                     WindowEvent::CursorMoved{..} => {
-                        if mouse_down[0] || mouse_down[1] {
-                            if let Some((x, y)) = mouse_image_pos {
-                                let x = (x / img_scale) as i32;
-                                let y = spectrogram.height() as i32 - (y / img_scale) as i32;
-                                if mouse_down[0] {
-                                    ctl.send(ToBackend::Prod{x, y});
-                                } else {
-                                    ctl.send(ToBackend::Erase{x, y});
-                                }
+                        if let Some((x, y)) = mouse_image_pos {
+                            let x = (x / img_scale) as i32;
+                            let y = spectrogram.height() as i32 - (y / img_scale) as i32;
+                            if mouse_down[0] {
+                                ctl.send(ToBackend::Prod{x, y});
+                            } else if mouse_down[1] {
+                                ctl.send(ToBackend::Erase{x, y});
                             }
+                            ctl.send(ToBackend::Info{x, y});
                         }
                     },
                     _ => (),
@@ -191,6 +193,16 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
                         ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
                                             spectrogram.height() as f32 * img_scale)).build();
                     });
+                if let Some(ToUI::Info{freq, a, b}) = point_info {
+                    ui.text(im_str!("Frequency: {:.1}", freq));
+                    macro_rules! label_complex { ($label:expr, $complex:expr) => (
+                        let (r, theta) = $complex.to_polar();
+                        ui.text(im_str!("{}: rad {:2.1}  angle {:3.1}°)", $label, r, theta.to_degrees()));
+                    )}
+                    label_complex!("A", a);
+                    label_complex!("B", b);
+                    ui.separator();
+                }
                 ui.separator();
                 ui.text(im_str!(
                     "Mouse Position: ({:.1},{:.1})",

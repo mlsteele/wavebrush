@@ -57,7 +57,7 @@ fn main() -> EResult {
     let args: Vec<String> = env::args().collect();
     let filename = args.get(1).map(|x| x.to_owned()).unwrap_or_else(|| "card.wav".to_owned());
 
-    let reader = hound::WavReader::open(filename).unwrap();
+    let reader = hound::WavReader::open(filename).context("reading input wav")?;
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
     assert_eq!(reader_spec.bits_per_sample, 16); // type inference is used to convert samples
@@ -90,9 +90,9 @@ fn main() -> EResult {
     let mut ax = 0;
     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
         ax += 1;
-        let sample: i16 = sample.unwrap();
+        let sample: i16 = sample?;
         let sample_f64: f64 = SampleConvert::convert(sample);
-        shredder.append_samples(&[sample_f64]).unwrap();
+        shredder.append_samples(&[sample_f64])?;
     }
     println!("input length : {:?}", ax);
 
@@ -102,7 +102,7 @@ fn main() -> EResult {
     let mut unshredder = Unshredder::new(sg.clone());
     let mut buf = unshredder.allocate_output_buf();
     let mut ay = 0;
-    while unshredder.output(&mut buf).unwrap() {
+    while unshredder.output(&mut buf)? {
         for sample in &buf {
             ay += 1;
         };
@@ -120,6 +120,11 @@ fn main() -> EResult {
         use control::Sliders;
         let mut sliders: Sliders = Default::default();
         for msg in ctl.r.iter() {match msg {
+            Info{x, y} => {
+                if let Some((freq, a, b)) = sg.get_dual(x, y) {
+                    ctl.send(ToUI::Info{freq, a: *a, b: *b});
+                }
+            },
             Prod{x, y} => {
                 Wrapper::new(&mut sg, &sliders).airbrush(x, y);
                 ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));

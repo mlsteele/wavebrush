@@ -58,6 +58,44 @@ impl Spectrogram {
         }
     }
 
+    pub fn get(&self, x: i32, y: i32) -> Option<&V> {
+        if x < 0 || y < 0 {
+            return None
+        }
+        if let Some(column) = self.data.get(x as usize) {
+            column.get(y as usize)
+        } else {
+            None
+        }
+    }
+
+    pub fn freq(&self, y: i32) -> f64 {
+        fft_freq(y as usize, self.settings.sample_rate as usize,
+                 self.settings.window_size as usize)
+    }
+
+    // Get the value at two points. The one at (x, y1) and its dual
+    // on the other half of the column.
+    // These are the buds who'd would be complex conjugates
+    // right after FFT of the real-valued audio signal.
+    /// Returns (freq, point value, dual value)
+    pub fn get_dual(&mut self, x: i32, y1: i32) -> Option<(f64, &Complex<f64>, &Complex<f64>)> {
+        let ws = self.settings.window_size as i32;
+        if y1 > ws/2 {
+            return None;
+        }
+        if let Some(v1) = self.get(x, y1) {
+            let y2 = ws - y1;
+            if let Some(v2) = self.get(x, y2) {
+                Some((self.freq(y1), v1, v2))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn data_mut(&mut self) -> &mut VecDeque<Column> {
         &mut self.data
     }
