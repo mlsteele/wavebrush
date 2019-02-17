@@ -52,15 +52,45 @@ use util::*;
 use std::thread;
 use std::env;
 
+fn main() {
+    if let Err(err) = main2() {
+        // eprintln!("{}", pretty_error(&err));
+        eprint_error(&err);
+        std::process::exit(1);
+    }
+}
+
+fn eprint_error(err: &failure::Error) {
+    eprintln!("");
+    for err in err.iter_chain() {
+        eprintln!("{}", err);
+    }
+    eprintln!("\n{:?}", err.backtrace());
+}
+
+// https://github.com/BurntSushi/imdb-rename/blob/f2a40bf/src/main.rs#L345-L355
+/// Return a prettily formatted error, including its entire causal chain.
+#[allow(dead_code)]
+fn pretty_error(err: &failure::Error) -> String {
+    let mut pretty = err.to_string();
+    let mut prev = err.as_fail();
+    while let Some(next) = prev.cause() {
+        pretty.push_str(": ");
+        pretty.push_str(&next.to_string());
+        prev = next;
+    }
+    pretty
+}
+
 #[allow(unused_variables)]
-fn main() -> EResult {
+fn main2() -> EResult {
     let args: Vec<String> = env::args().collect();
     let filename = args.get(1).map(|x| x.to_owned()).unwrap_or_else(|| "card.wav".to_owned());
 
     let reader = hound::WavReader::open(filename).context("reading input wav")?;
     let reader_spec = reader.spec().clone();
     println!("spec: {:?}", reader_spec);
-    ensure_eq!(reader_spec.bits_per_sample, 16, ""); // type inference is used to convert samples
+    ensure_eq!(reader_spec.bits_per_sample, 16, "sample size"); // type inference is used to convert samples
 
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
