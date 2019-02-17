@@ -1,8 +1,7 @@
 [package]
 name = "crashdummy"
 version = "0.1.0"
-authors = ["Miles Steele <miles@milessteele.com>"]
 edition = "2018"
 
 [dependencies]
-glium = { version = "0.23.0", default-features = true }
+glium = "0.23.0"
