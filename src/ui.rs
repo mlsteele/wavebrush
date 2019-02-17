@@ -43,109 +43,108 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
 
     // For info on how to configure fonts:
     // https://github.com/ocornut/imgui/blob/master/imgui.h#L1909
-    imgui.fonts().add_font_with_config(
-        include_bytes!("../resources/OpenSans/OpenSans-Regular.ttf"),
-        ImFontConfig::new()
-            .oversample_h(1)
-            .pixel_snap_h(true)
-            .size_pixels(font_size)
-            .glyph_extra_spacing([0.9, 0.]),
-        &FontGlyphRange::default(),
-    );
+    // imgui.fonts().add_font_with_config(
+    //     include_bytes!("../resources/OpenSans/OpenSans-Regular.ttf"),
+    //     ImFontConfig::new()
+    //         .oversample_h(1)
+    //         .pixel_snap_h(true)
+    //         .size_pixels(font_size)
+    //         .glyph_extra_spacing([0.9, 0.]),
+    //     &FontGlyphRange::default(),
+    // );
 
-    imgui.fonts().add_default_font_with_config(
-        ImFontConfig::new()
-            .oversample_h(1)
-            .pixel_snap_h(true)
-            .size_pixels(font_size),
-    );
+    // imgui.fonts().add_default_font_with_config(
+    //     ImFontConfig::new()
+    //         .oversample_h(1)
+    //         .pixel_snap_h(true)
+    //         .size_pixels(font_size),
+    // );
 
-    imgui.set_font_global_scale((1.0 / hidpi_factor) as f32);
+    // imgui.set_font_global_scale((1.0 / hidpi_factor) as f32);
 
     let mut renderer = Renderer::init(&mut imgui, &display).expect("Failed to initialize renderer");
 
     imgui_winit_support::configure_keys(&mut imgui);
 
-    let texture_id = renderer.textures().insert(texture_from_image(&spectrogram, &display));
+    // let texture_id = renderer.textures().insert(texture_from_image(&spectrogram, &display));
 
     let mut last_frame = Instant::now();
     let mut quit = false;
 
+    // // Mouse position in imgui screen coordinates
+    // let mut mouse_pos;
+    // let mut mouse_down: [bool; 5] = Default::default();
+    // // Mouse position in image coordinates.
+    // let mut mouse_image_pos: Option<(f32, f32)> = None;
 
-    // Mouse position in imgui screen coordinates
-    let mut mouse_pos;
-    let mut mouse_down: [bool; 5] = Default::default();
-    // Mouse position in image coordinates.
-    let mut mouse_image_pos: Option<(f32, f32)> = None;
+    // let mut sliders = SliderBank::new();
+    // sliders.add("weight", "Weight", 2.1, 0.1, 20.);
+    // sliders.add("size", "Brush size", 8., 1., 40.);
+    // sliders.add("fade_exp", "Fade factor", 1.9, 1., 10.);
+    // sliders.add("copies", "Copies", 20., 1., 100.);
+    // sliders.add("distance_linear", "Distance (lin)", 30., 1., 200.);
+    // sliders.add("distance_exp", "Distance (exp)", 1.1, 1., 10.);
 
-    let mut sliders = SliderBank::new();
-    sliders.add("weight", "Weight", 2.1, 0.1, 20.);
-    sliders.add("size", "Brush size", 8., 1., 40.);
-    sliders.add("fade_exp", "Fade factor", 1.9, 1., 10.);
-    sliders.add("copies", "Copies", 20., 1., 100.);
-    sliders.add("distance_linear", "Distance (lin)", 30., 1., 200.);
-    sliders.add("distance_exp", "Distance (exp)", 1.1, 1., 10.);
-
-    let mut point_info = None;
+    // let mut point_info = None;
 
     loop {
-        for msg in ctl.r.try_iter() {
-            use ToUI::*;
-            match msg {
-                Spectrogram(img) => {
-                    let _ = renderer.textures().replace(texture_id, texture_from_image(&img, &display));
-                },
-                x@Info{..} => point_info = Some(x),
-            }
-        }
+        // for msg in ctl.r.try_iter() {
+        //     use ToUI::*;
+        //     match msg {
+        //         Spectrogram(img) => {
+        //             let _ = renderer.textures().replace(texture_id, texture_from_image(&img, &display));
+        //         },
+        //         x@Info{..} => point_info = Some(x),
+        //     }
+        // }
 
-        events_loop.poll_events(|event| {
-            use glium::glutin::{Event, WindowEvent, WindowEvent::CloseRequested, VirtualKeyCode, KeyboardInput};
-            use glium::glutin::Event::*;
-            use glium::glutin::ElementState::*;
-            // println!("{:?}", event);
+        // events_loop.poll_events(|event| {
+        //     use glium::glutin::{Event, WindowEvent, WindowEvent::CloseRequested, VirtualKeyCode, KeyboardInput};
+        //     use glium::glutin::Event::*;
+        //     use glium::glutin::ElementState::*;
+        //     // println!("{:?}", event);
 
-            imgui_winit_support::handle_event(
-                &mut imgui,
-                &event,
-                window.get_hidpi_factor(),
-                hidpi_factor,
-            );
+        //     imgui_winit_support::handle_event(
+        //         &mut imgui,
+        //         &event,
+        //         window.get_hidpi_factor(),
+        //         hidpi_factor,
+        //     );
 
-            if let Event::WindowEvent { event, .. } = event {
-                match event {
-                    CloseRequested => quit = true,
-                    WindowEvent::KeyboardInput{
-                        input: KeyboardInput{
-                            state: Pressed, virtual_keycode:
-                            Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
-                    WindowEvent::CursorMoved{..} => {
-                        if let Some((x, y)) = mouse_image_pos {
-                            let x = (x / img_scale) as i32;
-                            let y = spectrogram.height() as i32 - (y / img_scale) as i32;
-                            if mouse_down[0] {
-                                ctl.send(ToBackend::Prod{x, y});
-                            } else if mouse_down[1] {
-                                ctl.send(ToBackend::Erase{x, y});
-                            }
-                            ctl.send(ToBackend::Info{x, y});
-                        }
-                    },
-                    _ => (),
-                }
-            }
-        });
+        //     // if let Event::WindowEvent { event, .. } = event {
+        //     //     match event {
+        //     //         CloseRequested => quit = true,
+        //     //         WindowEvent::KeyboardInput{
+        //     //             input: KeyboardInput{
+        //     //                 state: Pressed, virtual_keycode:
+        //     //                 Some(key), ..}, ..} if key == VirtualKeyCode::Escape => quit = true,
+        //     //         WindowEvent::CursorMoved{..} => {
+        //     //             if let Some((x, y)) = mouse_image_pos {
+        //     //                 let x = (x / img_scale) as i32;
+        //     //                 let y = spectrogram.height() as i32 - (y / img_scale) as i32;
+        //     //                 if mouse_down[0] {
+        //     //                     ctl.send(ToBackend::Prod{x, y});
+        //     //                 } else if mouse_down[1] {
+        //     //                     ctl.send(ToBackend::Erase{x, y});
+        //     //                 }
+        //     //                 ctl.send(ToBackend::Info{x, y});
+        //     //             }
+        //     //         },
+        //     //         _ => (),
+        //     //     }
+        //     // }
+        // });
 
-        if sliders.event() {
-            ctl.send(ToBackend::Sliders(Sliders{
-                weight: sliders.get("weight").unwrap(),
-                size: sliders.get("size").unwrap(),
-                fade_exp: sliders.get("fade_exp").unwrap(),
-                copies: sliders.get("copies").unwrap() as i32,
-                distance_linear: sliders.get("distance_linear").unwrap(),
-                distance_exp: sliders.get("distance_exp").unwrap(),
-            }));
-        }
+        // if sliders.event() {
+        //     ctl.send(ToBackend::Sliders(Sliders{
+        //         weight: sliders.get("weight").unwrap(),
+        //         size: sliders.get("size").unwrap(),
+        //         fade_exp: sliders.get("fade_exp").unwrap(),
+        //         copies: sliders.get("copies").unwrap() as i32,
+        //         distance_linear: sliders.get("distance_linear").unwrap(),
+        //         distance_exp: sliders.get("distance_exp").unwrap(),
+        //     }));
+        // }
 
         let now = Instant::now();
         let delta = now - last_frame;
@@ -157,8 +156,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         let frame_size = imgui_winit_support::get_frame_size(&window, hidpi_factor).unwrap();
 
         let ui = imgui.frame(frame_size, delta_s);
-        mouse_pos = ui.imgui().mouse_pos();
-        mouse_down = ui.imgui().mouse_down();
+        // mouse_pos = ui.imgui().mouse_pos();
+        // mouse_down = ui.imgui().mouse_down();
 
         let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
@@ -226,15 +225,15 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         //         ));
         //     });
 
-        let mut target = display.draw();
-        target.clear_color(
-            CLEAR_COLOR[0],
-            CLEAR_COLOR[1],
-            CLEAR_COLOR[2],
-            CLEAR_COLOR[3],
-        );
-        renderer.render(&mut target, ui).expect("Rendering failed");
-        target.finish().unwrap();
+        // let mut target = display.draw();
+        // target.clear_color(
+        //     CLEAR_COLOR[0],
+        //     CLEAR_COLOR[1],
+        //     CLEAR_COLOR[2],
+        //     CLEAR_COLOR[3],
+        // );
+        // renderer.render(&mut target, ui).expect("Rendering failed");
+        // target.finish().unwrap();
 
         if quit {
             break;
