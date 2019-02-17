@@ -162,69 +162,69 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
 
         let cond = ImGuiCond::FirstUseEver;
         use imgui::{im_str,ImGuiCond};
-        ui.window(im_str!("Wavebrush"))
-            .position((5.,5.), cond)
-            .size((spectrogram.width() as f32 * img_scale + 50.,
-                   spectrogram.height() as f32 * img_scale + 500.), cond)
-            .build(|| {
-                if ui.small_button(im_str!("Play")) {
-                    ctl.send(ToBackend::Play);
-                }
-                if ui.small_button(im_str!("Reset")) {
-                    ctl.send(ToBackend::Reset);
-                }
-                if ui.small_button(im_str!("Nuke")) {
-                    ctl.send(ToBackend::Nuke);
-                }
-                if ui.small_button(im_str!("Save")) {
-                    ctl.send(ToBackend::Save);
-                }
-                sliders.draw(&ui);
-                ui.separator();
-                let cursor_pos = ui.get_cursor_pos();
-                let cursor_screen_pos = ui.get_cursor_screen_pos();
-                ui.child_frame(im_str!("subwindow"),
-                               (spectrogram.width() as f32 * img_scale,
-                                spectrogram.height() as f32 * img_scale))
-                    .movable(false)
-                    .build(|| {
-                        mouse_image_pos = Some((mouse_pos.0 - cursor_screen_pos.0,
-                                                mouse_pos.1 - cursor_screen_pos.1));
-                        ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
-                                            spectrogram.height() as f32 * img_scale)).build();
-                    });
-                if let Some(ToUI::Info{freq, a, b}) = point_info {
-                    ui.text(im_str!("Frequency: {:.1}", freq));
-                    macro_rules! label_complex { ($label:expr, $complex:expr) => (
-                        let (r, theta) = $complex.to_polar();
-                        ui.text(im_str!("{}: rad {:2.1}  angle {:3.1}°)", $label, r, theta.to_degrees()));
-                    )}
-                    label_complex!("A", a);
-                    label_complex!("B", b);
-                    ui.separator();
-                }
-                ui.separator();
-                ui.text(im_str!(
-                    "Mouse Position: ({:.1},{:.1})",
-                    mouse_pos.0,
-                    mouse_pos.1
-                ));
-                ui.text(im_str!(
-                    "Cursor Position (Window): ({:.1},{:.1})",
-                    cursor_pos.0,
-                    cursor_pos.1
-                ));
-                ui.text(im_str!(
-                    "Cursor Position (Screen): ({:.1},{:.1})",
-                    cursor_screen_pos.0,
-                    cursor_screen_pos.1
-                ));
-                ui.text(im_str!(
-                    "Mouse Position (Image): ({:.1},{:.1})",
-                    mouse_image_pos.unwrap().0,
-                    mouse_image_pos.unwrap().1
-                ));
-            });
+        // ui.window(im_str!("Wavebrush"))
+        //     .position((5.,5.), cond)
+        //     .size((spectrogram.width() as f32 * img_scale + 50.,
+        //            spectrogram.height() as f32 * img_scale + 500.), cond)
+        //     .build(|| {
+        //         if ui.small_button(im_str!("Play")) {
+        //             ctl.send(ToBackend::Play);
+        //         }
+        //         if ui.small_button(im_str!("Reset")) {
+        //             ctl.send(ToBackend::Reset);
+        //         }
+        //         if ui.small_button(im_str!("Nuke")) {
+        //             ctl.send(ToBackend::Nuke);
+        //         }
+        //         if ui.small_button(im_str!("Save")) {
+        //             ctl.send(ToBackend::Save);
+        //         }
+        //         sliders.draw(&ui);
+        //         ui.separator();
+        //         let cursor_pos = ui.get_cursor_pos();
+        //         let cursor_screen_pos = ui.get_cursor_screen_pos();
+        //         ui.child_frame(im_str!("subwindow"),
+        //                        (spectrogram.width() as f32 * img_scale,
+        //                         spectrogram.height() as f32 * img_scale))
+        //             .movable(false)
+        //             .build(|| {
+        //                 mouse_image_pos = Some((mouse_pos.0 - cursor_screen_pos.0,
+        //                                         mouse_pos.1 - cursor_screen_pos.1));
+        //                 ui.image(texture_id, (spectrogram.width() as f32 * img_scale,
+        //                                     spectrogram.height() as f32 * img_scale)).build();
+        //             });
+        //         if let Some(ToUI::Info{freq, a, b}) = point_info {
+        //             ui.text(im_str!("Frequency: {:.1}", freq));
+        //             macro_rules! label_complex { ($label:expr, $complex:expr) => (
+        //                 let (r, theta) = $complex.to_polar();
+        //                 ui.text(im_str!("{}: rad {:2.1}  angle {:3.1}°)", $label, r, theta.to_degrees()));
+        //             )}
+        //             label_complex!("A", a);
+        //             label_complex!("B", b);
+        //             ui.separator();
+        //         }
+        //         ui.separator();
+        //         ui.text(im_str!(
+        //             "Mouse Position: ({:.1},{:.1})",
+        //             mouse_pos.0,
+        //             mouse_pos.1
+        //         ));
+        //         ui.text(im_str!(
+        //             "Cursor Position (Window): ({:.1},{:.1})",
+        //             cursor_pos.0,
+        //             cursor_pos.1
+        //         ));
+        //         ui.text(im_str!(
+        //             "Cursor Position (Screen): ({:.1},{:.1})",
+        //             cursor_screen_pos.0,
+        //             cursor_screen_pos.1
+        //         ));
+        //         ui.text(im_str!(
+        //             "Mouse Position (Image): ({:.1},{:.1})",
+        //             mouse_image_pos.unwrap().0,
+        //             mouse_image_pos.unwrap().1
+        //         ));
+        //     });
 
         let mut target = display.draw();
         target.clear_color(

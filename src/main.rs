@@ -146,68 +146,68 @@ fn main2() -> EResult {
     // The UI can only run on the main thread on macos.
     use control::ToBackend::*;
 
-    let h = thread::spawn(move || {
-        use control::Sliders;
-        let mut sliders: Sliders = Default::default();
-        for msg in ctl.r.iter() {match msg {
-            Info{x, y} => {
-                if let Some((freq, a, b)) = sg.get_dual(x, y) {
-                    ctl.send(ToUI::Info{freq, a: *a, b: *b});
-                }
-            },
-            Prod{x, y} => {
-                Wrapper::new(&mut sg, &sliders).airbrush(x, y);
-                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
-            },
-            Erase{x, y} => {
-                Wrapper::new(&mut sg, &sliders).erase(x, y);
-                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
-            },
-            Nuke => {
-                Wrapper::new(&mut sg, &sliders).nuke();
-                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
-            },
-            Sliders(s) => {
-                sliders = s;
-            },
-            Play => {
-                println!("<- play");
-                if let Err(err) = play(sg.clone()) {
-                    println!("play failed: {:?}", err);
-                }
-            },
-            Save => {
-                println!("<- save");
+    // let h = thread::spawn(move || {
+    //     use control::Sliders;
+    //     let mut sliders: Sliders = Default::default();
+    //     for msg in ctl.r.iter() {match msg {
+    //         Info{x, y} => {
+    //             if let Some((freq, a, b)) = sg.get_dual(x, y) {
+    //                 ctl.send(ToUI::Info{freq, a: *a, b: *b});
+    //             }
+    //         },
+    //         Prod{x, y} => {
+    //             Wrapper::new(&mut sg, &sliders).airbrush(x, y);
+    //             ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+    //         },
+    //         Erase{x, y} => {
+    //             Wrapper::new(&mut sg, &sliders).erase(x, y);
+    //             ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+    //         },
+    //         Nuke => {
+    //             Wrapper::new(&mut sg, &sliders).nuke();
+    //             ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+    //         },
+    //         Sliders(s) => {
+    //             sliders = s;
+    //         },
+    //         Play => {
+    //             println!("<- play");
+    //             // if let Err(err) = play(sg.clone()) {
+    //             //     println!("play failed: {:?}", err);
+    //             // }
+    //         },
+    //         Save => {
+    //             println!("<- save");
 
-                // Sav wav
-                let writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
-                if let Err(err) = save(sg.clone(), writer) {
-                    println!("save failed: {:?}", err);
-                } else {
-                    println!("save complete");
-                }
+    //             // Sav wav
+    //             let writer = hound::WavWriter::create("tmp/out.wav", out_spec).unwrap();
+    //             if let Err(err) = save(sg.clone(), writer) {
+    //                 println!("save failed: {:?}", err);
+    //             } else {
+    //                 println!("save complete");
+    //             }
 
-                // Save image
-                // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
-                let imgbuf = sg.image().expect("image");
-                let w = imgbuf.width();
-                let h = imgbuf.height();
-                println!("sg dimensions {} {}", w, h);
-                // let factor = 1;
-                // DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
-                imgbuf.clone().save("tmp/out.png").unwrap();
-            },
-            Reset => {
-                sg = sg_reset.clone();
-                ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
-            },
-            Quit => break,
-        }}
-    });
+    //             // Save image
+    //             // imgbuf.crop(0, 0, 100, 100).save("tmp/out.png").unwrap();
+    //             let imgbuf = sg.image().expect("image");
+    //             let w = imgbuf.width();
+    //             let h = imgbuf.height();
+    //             println!("sg dimensions {} {}", w, h);
+    //             // let factor = 1;
+    //             // DynamicImage::ImageRgb8(imgbuf.clone()).crop(0, h-(h/factor), w, h/factor).save("tmp/out.png").unwrap();
+    //             imgbuf.clone().save("tmp/out.png").unwrap();
+    //         },
+    //         Reset => {
+    //             sg = sg_reset.clone();
+    //             ctl.send(ToUI::Spectrogram(sg.image().expect("render image")));
+    //         },
+    //         Quit => break,
+    //     }}
+    // });
 
     ui::run(uictl, imgbuf);
 
-    h.join().expect("ui thread join");
+    // h.join().expect("ui thread join");
     EOK
 }
 
