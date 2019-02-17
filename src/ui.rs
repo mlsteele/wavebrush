@@ -31,11 +31,6 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
             spectrogram.width() as f64 * img_scale as f64 + 100.,
             spectrogram.height() as f64 * img_scale as f64 + 500.));
     let display = Display::new(builder, context, &events_loop).unwrap();
-    let window = display.gl_window();
-
-    loop {
-        println!("loop");
-    }
 }
 
 fn texture_from_image<F>(img: &SpectroImage, gl_ctx: &F) -> Texture2d
