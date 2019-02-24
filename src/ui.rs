@@ -23,7 +23,6 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let img_scale = 1.5f32;
 
     let mut events_loop = glutin::EventsLoop::new();
-    let hidpi_factor = events_loop.get_primary_monitor().get_hidpi_factor();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title("Wavebrush")
@@ -36,7 +35,8 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     let mut imgui = ImGui::init();
     imgui.set_ini_filename(None);
 
-    // let hidpi_factor = window.get_hidpi_factor().round();
+    let hidpi_factor = events_loop.get_primary_monitor().get_hidpi_factor().floor();
+    dbg!(hidpi_factor);
     // let hidpi_factor = 2.;
 
     let font_size = (18.0 * hidpi_factor) as f32;
