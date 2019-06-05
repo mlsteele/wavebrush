@@ -65,6 +65,15 @@ impl<In,Out> FullDuplex<In,Out> {
     }
 }
 
+impl<In,Out> Clone for FullDuplex<In,Out> {
+    fn clone(&self) -> Self {
+        Self {
+            r: self.r.clone(),
+            s: self.s.clone(),
+        }
+    }
+}
+
 pub fn new_ctl() -> (CtlUI, CtlBackend) {
     FullDuplex::new_pair()
 }

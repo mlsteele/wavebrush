@@ -28,7 +28,7 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
         .with_title("Wavebrush")
         .with_dimensions(glutin::dpi::LogicalSize::new(
             spectrogram.width() as f64 * img_scale as f64 + 100.,
-            spectrogram.height() as f64 * img_scale as f64 + 500.));
+            spectrogram.height() as f64 * img_scale as f64 + 200.));
     let display = Display::new(builder, context, &events_loop).unwrap();
     let window = display.gl_window();
 
@@ -36,7 +36,6 @@ pub fn run(ctl: CtlUI, spectrogram: SpectroImage) {
     imgui.set_ini_filename(None);
 
     let hidpi_factor = events_loop.get_primary_monitor().get_hidpi_factor().floor();
-    dbg!(hidpi_factor);
     // let hidpi_factor = 2.;
 
     let font_size = (18.0 * hidpi_factor) as f32;

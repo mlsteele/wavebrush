@@ -139,6 +139,7 @@ fn main2() -> EResult {
     }
     println!("output length: {:?}", ay);
 
+    // Wrapper::new(&mut sg, &Default::default()).scratch();
     let imgbuf = sg.image()?;
 
     let (uictl, ctl) = new_ctl();

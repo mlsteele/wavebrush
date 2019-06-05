@@ -95,4 +95,38 @@ impl<'a> Wrapper<'a> {
         }
     }
 
+    // pub fn scratch(&mut self) {
+    //     let st = self.sp.settings.clone();
+    //     for (frame, column) in self.sp.data_mut().iter_mut().enumerate() {
+    //         for (i, v) in column.iter_mut().enumerate() {
+    //             let freq = fft_freq(i,
+    //                 st.sample_rate as usize, st.window_size as usize);
+    //             let (mut r, theta) = v.to_polar();
+    //             // dbg!(freq);
+    //             // dbg!(r);
+    //             // dbg!(theta);
+    //         }
+    //     }
+    // }
+
+    // pub fn scratch2(&mut self) {
+    //     let st = self.sp.settings.clone();
+    //     for (frame, column) in self.sp.data_mut().iter_mut().enumerate() {
+    //         for (i, v) in column.iter_mut().enumerate() {
+    //             // Simulate phase recovery.
+    //             let freq = fft_freq(i,
+    //                 st.sample_rate as usize, st.window_size as usize);
+    //             let r = if i == st.window_size as usize - 5 {
+    //                 3500.
+    //             } else {
+    //                 0.
+    //             };
+    //             // let columns_per_second: f64 = st.sample_rate as f64 * 2.;
+    //             // let theta = 2. * PI * frame as f64 / columns_per_second * freq;
+    //             let theta = frame as f64 / 10.;
+    //             *v = Complex::from_polar(&r, &theta);
+    //         }
+    //     }
+    // }
+
 }
