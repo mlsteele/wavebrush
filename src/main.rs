@@ -133,16 +133,25 @@ fn main2() -> EResult {
     let mut sg = shredder.sg;
 
     // Rewrite the whole sg.
-    // for x in 0..sg.data.len() {
-    //     for y in 0..settings.window_size {
-    //         let v = sg.get_mut(x, y).expect("sg mod");
-    //         let freq = sg.freq(y);
-    //         let (r, theta) = v.to_polar();
-    //         r = 0.;
-    //         theta = 0.;
-    //         *v = Complex::from_polar(&r, &theta);
-    //     }
-    // }
+    for x in 0..sg.width() {
+        for y in 0..settings.window_size {
+            let y = y as i32;
+            let freq = sg.freq(y);
+            let v = sg.get_mut(x, y).expect("sg mod");
+            let (mut r, mut theta) = v.to_polar();
+            if y == 5 {
+                r = 102.2;
+                theta = 1.5707978428947937;
+                if x %2 == 0 {
+                    theta *= -1.;
+                }
+            } else {
+                r = 0.;
+                theta = 0.;
+            }
+            *v = Complex::from_polar(&r, &theta);
+        }
+    }
 
     // Print a column
     // for y in 0..settings.window_size {
