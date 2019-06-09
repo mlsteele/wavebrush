@@ -32,3 +32,7 @@ pub fn rad_clock(radians: f64) -> char {
         }
     )
 }
+
+#[macro_export] macro_rules! dont {
+    {$s:block} => { if false { $s } }
+}

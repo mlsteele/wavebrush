@@ -121,13 +121,15 @@ fn main2() -> EResult {
         ax += 1;
         let sample: i16 = sample?;
         let sample_f64: f64 = SampleConvert::convert(sample);
-        let freq: f64 = 775.2;
-        // let freq: f64 = 689.1;
-        // let freq: f64 = (689.1 + 775.2) / 2.;
-        let sample_f64: f64 = (ax as f64 / settings.sample_rate as f64 * 2. * PI * freq).sin() * 0.8; // sin wave
-        // dbg!(ax);
-        // dbg!(sample_f64);
-        // let sample_f64: f64 = (ax as f64 / 1000.).sin();
+        dont! {{
+            let freq: f64 = 775.2;
+            // let freq: f64 = 689.1;
+            // let freq: f64 = (689.1 + 775.2) / 2.;
+            let sample_f64: f64 = (ax as f64 / settings.sample_rate as f64 * 2. * PI * freq).sin() * 0.8; // sin wave
+            // dbg!(ax);
+            // dbg!(sample_f64);
+            // let sample_f64: f64 = (ax as f64 / 1000.).sin();
+        }}
         shredder.append_samples(&[sample_f64])?;
     }
     println!("input length : {:?}", ax);
@@ -135,51 +137,57 @@ fn main2() -> EResult {
     let mut sg = shredder.sg;
 
     // Rewrite the whole sg.
-    // Wrapper::new(&mut sg, &Default::default()).nuke();
-    // for x in 0..sg.width() {
-    //     Wrapper::new(&mut sg, &Default::default()).effect_dual(x, 4, |v, flop| {
-    //         let r = 50.9;
-    //         let theta = 0.;
-    //         // let theta = PI * (x as f64);
-    //         *v = Complex::from_polar(&r, &theta);
-    //         if flop {*v = v.conj()};
-    //     });
-    //     // for y in 0..settings.window_size {
-    //     //     let y = y as i32;
-    //     //     let freq = sg.freq(y);
-    //     //     let v = sg.get_mut(x, y).expect("sg mod");
-    //     //     let (mut r, mut theta) = v.to_polar();
-    //     //     if y == 5 {
-    //     //         r = 50.9;
-    //     //         theta = PI * (x as f64);
-    //     //     } else {
-    //     //         r = 0.;
-    //     //         theta = 0.;
-    //     //     }
-    //     //     *v = Complex::from_polar(&r, &theta);
-    //     // }
-    // }
+    dont! {{
+        Wrapper::new(&mut sg, &Default::default()).nuke();
+        for x in 0..sg.width() {
+            Wrapper::new(&mut sg, &Default::default()).effect_dual(x, 4, |v, flop| {
+                let r = 50.9;
+                let theta = 0.;
+                // let theta = PI * (x as f64);
+                *v = Complex::from_polar(&r, &theta);
+                if flop {*v = v.conj()};
+            });
+            // for y in 0..settings.window_size {
+            //     let y = y as i32;
+            //     let freq = sg.freq(y);
+            //     let v = sg.get_mut(x, y).expect("sg mod");
+            //     let (mut r, mut theta) = v.to_polar();
+            //     if y == 5 {
+            //         r = 50.9;
+            //         theta = PI * (x as f64);
+            //     } else {
+            //         r = 0.;
+            //         theta = 0.;
+            //     }
+            //     *v = Complex::from_polar(&r, &theta);
+            // }
+        }
+    }}
 
     // Print a column
-    for y in 0..settings.window_size {
-        let y = y as i32;
-        let v = sg.get(100, y).expect("sg inspect");
-        let (r, theta) = v.to_polar();
-        println!("y:{:3} freq:{:9.2} r:{:5.1} theta:{:5.2}", y, sg.freq(y), r, theta);
-    }
-    println!("end column");
+    dont! {{
+        for y in 0..settings.window_size {
+            let y = y as i32;
+            let v = sg.get(100, y).expect("sg inspect");
+            let (r, theta) = v.to_polar();
+            println!("y:{:3} freq:{:9.2} r:{:5.1} theta:{:5.2}", y, sg.freq(y), r, theta);
+        }
+        println!("end column");
+    }}
 
     // Print some rows..
-    for x in 0..sg.width() {
-        for y in 7..11 {
-            let v = sg.get(x, y).expect("sg inspect");
-            let (r, theta) = v.to_polar();
-            let freq = sg.freq(y);
-            println!("x:{:4} y:{:3} freq:{:9.2} r:{:5.1} theta:{:5.2} {}",
-                     x, y, sg.freq(y), r, theta, rad_clock(theta));
+    dont! {{
+        for x in 0..sg.width() {
+            for y in 7..11 {
+                let v = sg.get(x, y).expect("sg inspect");
+                let (r, theta) = v.to_polar();
+                let freq = sg.freq(y);
+                println!("x:{:4} y:{:3} freq:{:9.2} r:{:5.1} theta:{:5.2} {}",
+                        x, y, sg.freq(y), r, theta, rad_clock(theta));
+            }
+            println!("----------");
         }
-        println!("----------");
-    }
+    }}
 
     let sg_reset = sg.clone();
 
