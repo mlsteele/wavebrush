@@ -96,7 +96,6 @@ fn main2() -> EResult {
     out_spec.channels = 1;
 
     let window_type: WindowType = WindowType::Hanning;
-    // let window_size: usize = 1024; // When this isn't a power of two garbage comes out.
     let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
@@ -140,11 +139,8 @@ fn main2() -> EResult {
             let v = sg.get_mut(x, y).expect("sg mod");
             let (mut r, mut theta) = v.to_polar();
             if y == 5 {
-                r = 102.2;
-                theta = 1.5707978428947937;
-                if x %2 == 0 {
-                    theta *= -1.;
-                }
+                r = 50.9;
+                theta = PI * (x as f64).powf(1.4);
             } else {
                 r = 0.;
                 theta = 0.;
@@ -154,21 +150,21 @@ fn main2() -> EResult {
     }
 
     // Print a column
-    // for y in 0..settings.window_size {
-    //     let y = y as i32;
-    //     let v = sg.get(100, y).expect("sg inspect");
-    //     let (r, theta) = v.to_polar();
-    //     println!("y:{} freq:{:5} r:{:5} theta:{:5}", y, sg.freq(y), r, theta);
-    // }
+    for y in 0..settings.window_size {
+        let y = y as i32;
+        let v = sg.get(100, y).expect("sg inspect");
+        let (r, theta) = v.to_polar();
+        println!("y:{} freq:{:5} r:{:5} theta:{:5}", y, sg.freq(y), r, theta);
+    }
 
     // Print a row
-    for x in 0..sg.width() {
-        let y = 5;
-        let v = sg.get(x, y).expect("sg inspect");
-        let (r, theta) = v.to_polar();
-        let freq = sg.freq(y);
-        println!("x:{} y:{} freq:{:5} r:{:5} theta:{:5}", x, y, sg.freq(y), r, theta);
-    }
+    // for x in 0..sg.width() {
+    //     let y = 3;
+    //     let v = sg.get(x, y).expect("sg inspect");
+    //     let (r, theta) = v.to_polar();
+    //     let freq = sg.freq(y);
+    //     println!("x:{} y:{} freq:{:5} r:{:5} theta:{:5}", x, y, sg.freq(y), r, theta);
+    // }
 
     let sg_reset = sg.clone();
 
@@ -193,6 +189,7 @@ fn main2() -> EResult {
     let xxxctl = uictl.clone();
     thread::spawn(move || {
         xxxctl.send(Save);
+        xxxctl.send(Play);
     });
 
     let h = thread::spawn(move || {
