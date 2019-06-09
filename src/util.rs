@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 pub fn rescale(v: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
     return ((v - in_min) / (in_max - in_min) * (out_max - out_min)) + out_min;
 }
@@ -13,6 +15,12 @@ pub fn fft_freq(i: usize, sample_rate: usize, fft_size: usize) -> f64 {
     } else {
         sample_rate as f64 - base
     }
+}
+
+pub fn rad_clock(radians: f64) -> char {
+    let norm = (((radians / 2. * PI) % 1.) + 1.) % 1.;
+    const SYMBOLS: [char; 12] = ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'];
+    SYMBOLS[(norm * SYMBOLS.len() as f64) as usize]
 }
 
 #[macro_export] macro_rules! ensure_eq {
