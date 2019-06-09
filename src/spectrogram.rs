@@ -9,7 +9,7 @@ type V = Complex<f64>;
 type Column = Vec<V>;
 pub type Img = image::ImageBuffer<image::Rgb<u8>, Vec<u8>>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Settings {
     /// Samples per second
     pub sample_rate: u32,

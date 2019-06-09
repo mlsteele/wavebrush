@@ -122,11 +122,21 @@ fn main2() -> EResult {
         ax += 1;
         let sample: i16 = sample?;
         let sample_f64: f64 = SampleConvert::convert(sample);
+        // let sample_f64: f64 = (ax as f64 / 14.).sin() * 0.7; // sin wave
+        // dbg!(ax);
+        // dbg!(sample_f64);
+        // let sample_f64: f64 = (ax as f64 / 1000.).sin();
         shredder.append_samples(&[sample_f64])?;
     }
     println!("input length : {:?}", ax);
 
     let mut sg = shredder.sg;
+    for y in 0..settings.window_size {
+        let y = y as i32;
+        let v = sg.get(100, y).expect("sg inspect");
+        let (r, theta) = v.to_polar();
+        println!("freq:{:5} r:{:5} theta:{:5}", sg.freq(y), r, theta);
+    }
     let sg_reset = sg.clone();
 
     let mut unshredder = Unshredder::new(sg.clone());
@@ -146,6 +156,11 @@ fn main2() -> EResult {
 
     // The UI can only run on the main thread on macos.
     use control::ToBackend::*;
+
+    let xxxctl = uictl.clone();
+    thread::spawn(move || {
+        xxxctl.send(Save);
+    });
 
     let h = thread::spawn(move || {
         use control::Sliders;
