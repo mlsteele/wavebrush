@@ -39,6 +39,8 @@ impl Spectrogram {
         (self.settings, self.data)
     }
 
+    pub fn width(&self) -> i32 { self.data.len() as i32 }
+
     /// Push a column of FFT values.
     pub fn push_back(&mut self, column: Column) -> EResult {
         ensure!(column.len() == self.settings.window_size as usize,

@@ -131,12 +131,36 @@ fn main2() -> EResult {
     println!("input length : {:?}", ax);
 
     let mut sg = shredder.sg;
-    for y in 0..settings.window_size {
-        let y = y as i32;
-        let v = sg.get(100, y).expect("sg inspect");
+
+    // Rewrite the whole sg.
+    // for x in 0..sg.data.len() {
+    //     for y in 0..settings.window_size {
+    //         let v = sg.get_mut(x, y).expect("sg mod");
+    //         let freq = sg.freq(y);
+    //         let (r, theta) = v.to_polar();
+    //         r = 0.;
+    //         theta = 0.;
+    //         *v = Complex::from_polar(&r, &theta);
+    //     }
+    // }
+
+    // Print a column
+    // for y in 0..settings.window_size {
+    //     let y = y as i32;
+    //     let v = sg.get(100, y).expect("sg inspect");
+    //     let (r, theta) = v.to_polar();
+    //     println!("y:{} freq:{:5} r:{:5} theta:{:5}", y, sg.freq(y), r, theta);
+    // }
+
+    // Print a row
+    for x in 0..sg.width() {
+        let y = 5;
+        let v = sg.get(x, y).expect("sg inspect");
         let (r, theta) = v.to_polar();
-        println!("freq:{:5} r:{:5} theta:{:5}", sg.freq(y), r, theta);
+        let freq = sg.freq(y);
+        println!("x:{} y:{} freq:{:5} r:{:5} theta:{:5}", x, y, sg.freq(y), r, theta);
     }
+
     let sg_reset = sg.clone();
 
     let mut unshredder = Unshredder::new(sg.clone());
