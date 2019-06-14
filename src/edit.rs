@@ -68,9 +68,9 @@ impl<'a> Wrapper<'a> {
                 let x = x + dx;
                 let y = y + dy;
                 self.effect_dual(x, y, |v, _| {
-                    let (mut r, theta) = v.to_polar();
-                    r += weight / (brush_r2+1.);
-                    *v = Complex::from_polar(&r, &theta);
+                    let r = weight / (brush_r2+1.);
+                    let theta = PI * x as f64;
+                    *v += Complex::from_polar(&r, &theta);
                 });
             }
         }

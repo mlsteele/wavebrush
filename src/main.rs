@@ -96,7 +96,7 @@ fn main2() -> EResult {
     out_spec.channels = 1;
 
     let window_type: WindowType = WindowType::Hanning;
-    let window_size: usize = (2 as usize).pow(9); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
     // let step_size: usize = (window_size / 2) / 8;
@@ -137,14 +137,16 @@ fn main2() -> EResult {
     let mut sg = shredder.sg;
 
     // Rewrite the whole sg.
-    dont! {{
-        Wrapper::new(&mut sg, &Default::default()).nuke();
+    // dont! {{
+        // Wrapper::new(&mut sg, &Default::default()).nuke();
         for x in 0..sg.width() {
             Wrapper::new(&mut sg, &Default::default()).effect_dual(x, 4, |v, flop| {
-                let r = 50.9;
-                let theta = 0.;
+                // let (mut r, mut theta) = v.to_polar();
+                // let r = 50.9;
+                // let theta = 0.;
                 // let theta = PI * (x as f64);
-                *v = Complex::from_polar(&r, &theta);
+                // *v = Complex::from_polar(&r, &theta);
+                v.im *= -1. * v.re;
                 if flop {*v = v.conj()};
             });
             // for y in 0..settings.window_size {
@@ -162,7 +164,7 @@ fn main2() -> EResult {
             //     *v = Complex::from_polar(&r, &theta);
             // }
         }
-    }}
+    // }}
 
     // Print a column
     dont! {{
