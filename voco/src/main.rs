@@ -58,12 +58,22 @@ fn main2() -> EResult {
         };
         match data {
             StreamData::Input{ buffer: UnknownTypeInputBuffer::F32(buffer) } => {
-                println!("thx");
+                if let Err(err) = on_input(&format, &*buffer) {
+                    eprintln!("stream error [{:?}]: {}", stream_id, err);
+                }
             }
             _ => (),
         }
 
     });
+}
+
+fn on_input(format: &cpal::Format, buf: &[f32]) -> EResult {
+    use rodio::*;
+    let device = rodio::default_output_device().ok_or(format_err!("output device"))?;
+    let src = rodio::buffer::SamplesBuffer::new(1, format.sample_rate.0, buf);
+    rodio::play_raw(&device, src.convert_samples());
+    EOK
 }
 
 //     let settings = Settings{

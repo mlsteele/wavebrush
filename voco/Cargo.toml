@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 cpal = "0.10.0"
 failure = "0.1.5"
+rodio = "0.8.1"
 
 lib = { path = "../lib" }
