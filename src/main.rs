@@ -2,15 +2,14 @@
 
 extern crate hound;
 extern crate rodio;
-extern crate image;
 #[macro_use] extern crate failure;
 use failure::*;
 
-mod sample;
-#[allow(dead_code)]
-mod util;
+use lib::*;
+use lib::shredder::{Shredder,Unshredder};
+use lib::error::*;
 
-use lib::stft;
+mod sample;
 
 #[allow(dead_code)]
 mod control;
@@ -22,27 +21,14 @@ use bs::*;
 mod ui;
 use ui::*;
 
-#[allow(dead_code)]
-mod colorramp;
-
-#[allow(dead_code)]
-mod spectrogram;
-use spectrogram::*;
-
-#[allow(dead_code)]
-mod shredder;
-use shredder::*;
+use lib::spectrogram::*;
 
 #[allow(dead_code)]
 mod edit;
 use edit::*;
 
-mod error;
-use error::*;
-
 use std::f64;
 use num::complex::Complex;
-use image::{DynamicImage};
 use std::f64::consts::PI;
 use sample::{SampleConvert,*};
 use util::*;

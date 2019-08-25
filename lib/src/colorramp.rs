@@ -3,13 +3,6 @@ pub fn ramp(v: f64) -> [u8; 3] {
     TAB[((v * 1024.).max(0.) as usize).min(TAB.len()-1)].1
 }
 
-fn flatten<T>(x: std::result::Result<T,T>) -> T {
-    match x {
-        Ok(x) => x,
-        Err(x) => x,
-    }
-}
-
 // Inferno color ramp
 // "Color Tables (float): 1024"
 // https://www.kennethmoreland.com/color-advice/

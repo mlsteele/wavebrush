@@ -6,6 +6,8 @@ edition = "2018"
 
 [dependencies]
 apodize = "0.3.1"
+failure = "0.1.5"
+image = "0.21.0"
 num = "0.2.0"
 rustfft = "3.0.0"
 strider = "0.1.3"

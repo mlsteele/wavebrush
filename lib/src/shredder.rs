@@ -1,8 +1,6 @@
-use lib::*;
 use crate::spectrogram::*;
-use lib::stft::{STFT, WindowType};
+use crate::stft::{STFT, WindowType};
 use crate::error::*;
-use crate::util::*;
 use rustfft::{FFTplanner,FFT};
 use num::complex::Complex;
 use std::sync::Arc;
