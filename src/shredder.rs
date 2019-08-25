@@ -1,5 +1,6 @@
+use lib::*;
 use crate::spectrogram::*;
-use crate::stft::{STFT, WindowType};
+use lib::stft::{STFT, WindowType};
 use crate::error::*;
 use crate::util::*;
 use rustfft::{FFTplanner,FFT};
@@ -39,7 +40,7 @@ impl Shredder {
 /// Output audio from a spectrogram.
 pub struct Unshredder {
     settings: Settings,
-    ifft: Arc<FFT<f64>>,
+    ifft: Arc<dyn FFT<f64>>,
     src: VecDeque<Column>,
     buf_overlap: Vec<Complex<f64>>,
     scratch: Vec<Complex<f64>>,

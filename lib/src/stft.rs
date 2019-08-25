@@ -144,7 +144,7 @@ impl WindowType {
 pub struct STFT {
     pub window_size: usize,
     pub step_size: usize,
-    pub fft: Arc<FFT<f64>>,
+    pub fft: Arc<dyn FFT<f64>>,
     pub window: Option<Vec<f64>>,
     /// internal ringbuffer used to store samples
     pub sample_ring: SliceRingImpl<f64>,

@@ -10,9 +10,7 @@ mod sample;
 #[allow(dead_code)]
 mod util;
 
-#[allow(dead_code)]
-mod stft;
-use stft::{STFT, WindowType};
+use lib::stft;
 
 #[allow(dead_code)]
 mod control;
@@ -43,7 +41,6 @@ mod error;
 use error::*;
 
 use std::f64;
-use rustfft::{FFTplanner};
 use num::complex::Complex;
 use image::{DynamicImage};
 use std::f64::consts::PI;
@@ -95,7 +92,7 @@ fn main2() -> EResult {
     let mut out_spec = reader.spec().clone();
     out_spec.channels = 1;
 
-    let window_type: WindowType = WindowType::Hanning;
+    let window_type: stft::WindowType = stft::WindowType::Hanning;
     let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
     // let window_size: usize = 1024;
     // let window_size: usize = reader_spec.sample_rate as usize / 100;
