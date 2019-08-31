@@ -2,7 +2,7 @@
 
 use lib::error::*;
 
-use cpal::{StreamData, UnknownTypeInputBuffer};
+use cpal::{Host, Device, Format, StreamData, UnknownTypeInputBuffer};
 use cpal::traits::{DeviceTrait,HostTrait,EventLoopTrait};
 
 fn main() {
@@ -39,12 +39,10 @@ fn pretty_error(err: &failure::Error) -> String {
 fn main2() -> EResult {
     let host = cpal::default_host();
     let event_loop = host.event_loop();
-    let device = host.default_input_device().ok_or(format_err!("no input device"))?;
-    let formats: Vec<_> = device.supported_input_formats()?.collect();
-    for format in formats.iter() { println!("{:?}", format); }
-    let format = formats.iter().next().ok_or(format_err!("no stream format"))?.clone().with_max_sample_rate();
-    println!("selected format: {:?}", format);
-    let input_stream_id = event_loop.build_input_stream(&device, &format)?;
+    let (device_input, format_input) = get_input(&host)?;
+    let input_stream_id = event_loop.build_input_stream(&device_input, &format_input)?;
+    // let output_stream_id = event_loop.build_output_stream();
+    println!("event loop");
     event_loop.run(move |stream_id, stream_result| {
         if stream_id != input_stream_id {
             return
@@ -58,14 +56,27 @@ fn main2() -> EResult {
         };
         match data {
             StreamData::Input{ buffer: UnknownTypeInputBuffer::F32(buffer) } => {
-                if let Err(err) = on_input(&format, &*buffer) {
-                    eprintln!("stream error [{:?}]: {}", stream_id, err);
+                for v in buffer.iter() {
+                    if *v != 0.0 {
+                        println!("stream data {:?}", v);
+                    }
                 }
+                // if let Err(err) = on_input(&format_input, &*buffer) {
+                //     eprintln!("stream error [{:?}]: {}", stream_id, err);
+                // }
             }
-            _ => (),
+            _ => eprintln!("unrecognized stream data"),
         }
-
     });
+}
+
+fn get_input(host: &Host) -> Result<(Device, Format)> {
+    let device = host.default_input_device().ok_or(format_err!("no input device"))?;
+    let formats: Vec<_> = device.supported_input_formats()?.collect();
+    for format in formats.iter() { println!("{:?}", format); }
+    let format = formats.iter().next().ok_or(format_err!("no input stream format"))?.clone().with_max_sample_rate();
+    println!("selected input format: {:?}", format);
+    Ok((device, format))
 }
 
 fn on_input(format: &cpal::Format, buf: &[f32]) -> EResult {
