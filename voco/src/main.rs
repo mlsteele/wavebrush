@@ -1,6 +1,9 @@
 #[macro_use] extern crate failure;
 
 use lib::error::*;
+use lib::spectrogram::*;
+use lib::shredder::*;
+use lib::sample::{SampleConvert,*};
 
 use cpal::{Host, Device, Format, StreamData, UnknownTypeInputBuffer};
 use cpal::traits::{DeviceTrait,HostTrait,EventLoopTrait};
@@ -41,12 +44,22 @@ fn main2() -> EResult {
     let event_loop = host.event_loop();
     let (device_input, format_input) = get_input(&host)?;
     let input_stream_id = event_loop.build_input_stream(&device_input, &format_input)?;
-    // let output_stream_id = event_loop.build_output_stream();
+    let (device_output, format_output) = get_output(&host)?;
+    let output_stream_id = event_loop.build_output_stream(&device_output, &format_output)?;
     println!("event loop");
+
+    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
+    let step_size: usize = window_size / 2;
+    let settings = Settings{
+        sample_rate: format_input.sample_rate.0,
+        window_size: window_size as u32,
+        step_size: step_size as u32,
+    };
+    let mut shredder = Shredder::new(settings);
+
+    // event_loop.play_stream(input_stream_id.clone())?;
+
     event_loop.run(move |stream_id, stream_result| {
-        if stream_id != input_stream_id {
-            return
-        }
         let data = match stream_result {
             Ok(data) => data,
             Err(err) => {
@@ -55,16 +68,26 @@ fn main2() -> EResult {
             }
         };
         match data {
-            StreamData::Input{ buffer: UnknownTypeInputBuffer::F32(buffer) } => {
-                for v in buffer.iter() {
-                    if *v != 0.0 {
-                        println!("stream data {:?}", v);
+            StreamData::Input{ buffer: cpal::UnknownTypeInputBuffer::F32(buffer) } => {
+                if stream_id != input_stream_id { return }
+                println!("input");
+                let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
+                shredder.append_samples(&converted).expect("processing input samples");
+            },
+            StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {
+                if stream_id != output_stream_id { return }
+                println!("output");
+                if let Some(column) = shredder.sg.pop_front() {
+                    let mut sg = Spectrogram::new(settings);
+                    sg.push_back(column).expect("sg.push_back");
+                    let mut unshredder = Unshredder::new(sg);
+                    let mut buf = Vec::with_capacity(buffer.len());
+                    unshredder.output(&mut buf).expect("unshredder.output");
+                    for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
+                        *sample = SampleConvert::convert(buf_sample);
                     }
                 }
-                // if let Err(err) = on_input(&format_input, &*buffer) {
-                //     eprintln!("stream error [{:?}]: {}", stream_id, err);
-                // }
-            }
+            },
             _ => eprintln!("unrecognized stream data"),
         }
     });
@@ -72,87 +95,17 @@ fn main2() -> EResult {
 
 fn get_input(host: &Host) -> Result<(Device, Format)> {
     let device = host.default_input_device().ok_or(format_err!("no input device"))?;
-    let formats: Vec<_> = device.supported_input_formats()?.collect();
-    for format in formats.iter() { println!("{:?}", format); }
-    let format = formats.iter().next().ok_or(format_err!("no input stream format"))?.clone().with_max_sample_rate();
+    // let formats: Vec<_> = device.supported_input_formats()?.collect();
+    // for format in formats.iter() { println!("{:?}", format); }
+    // let format = formats.iter().next().ok_or(format_err!("no input stream format"))?.clone().with_max_sample_rate();
+    let format = device.default_input_format()?;
     println!("selected input format: {:?}", format);
     Ok((device, format))
 }
 
-fn on_input(format: &cpal::Format, buf: &[f32]) -> EResult {
-    use rodio::*;
-    let device = rodio::default_output_device().ok_or(format_err!("output device"))?;
-    let src = rodio::buffer::SamplesBuffer::new(1, format.sample_rate.0, buf);
-    rodio::play_raw(&device, src.convert_samples());
-    EOK
+fn get_output(host: &Host) -> Result<(Device, Format)> {
+    let device = host.default_output_device().ok_or(format_err!("no input device"))?;
+    let format = device.default_output_format()?;
+    println!("selected output format: {:?}", format);
+    Ok((device, format))
 }
-
-//     let settings = Settings{
-//         sample_rate: reader_spec.sample_rate,
-//         window_size: window_size as u32,
-//         step_size: step_size as u32,
-//     };
-
-//     let mut shredder = Shredder::new(settings);
-//     // Scan one channel of the audio.
-//     let mut ax = 0;
-//     for sample in reader.into_samples().step_by(reader_spec.channels as usize) {
-//         ax += 1;
-//         let sample: i16 = sample?;
-//         let sample_f64: f64 = SampleConvert::convert(sample);
-//         dont! {{
-//             let freq: f64 = 775.2;
-//             // let freq: f64 = 689.1;
-//             // let freq: f64 = (689.1 + 775.2) / 2.;
-//             let sample_f64: f64 = (ax as f64 / settings.sample_rate as f64 * 2. * PI * freq).sin() * 0.8; // sin wave
-//             // dbg!(ax);
-//             // dbg!(sample_f64);
-//             // let sample_f64: f64 = (ax as f64 / 1000.).sin();
-//         }}
-//         shredder.append_samples(&[sample_f64])?;
-//     }
-//     println!("input length : {:?}", ax);
-
-//     let mut sg = shredder.sg;
-
-//     let mut unshredder = Unshredder::new(sg.clone());
-//     let mut buf = unshredder.allocate_output_buf();
-//     let mut ay = 0;
-//     while unshredder.output(&mut buf)? {
-//         for sample in &buf {
-//             ay += 1;
-//         };
-//     }
-//     println!("output length: {:?}", ay);
-
-
-// }
-
-
-// fn play(sg: Spectrogram) -> EResult {
-//     use rodio::*;
-//     let device = rodio::default_output_device().ok_or(format_err!("output device"))?;
-//     let mut unshredder = Unshredder::new(sg.clone());
-//     let mut buf = unshredder.allocate_output_buf();
-//     let mut buf_all = Vec::new();
-//     while unshredder.output(&mut buf)? {
-//         buf_all.extend(buf.iter().map(|&x| x as f32));
-//     }
-//     let src = rodio::buffer::SamplesBuffer::new(1, sg.settings.sample_rate, buf_all);
-//     rodio::play_raw(&device, src.convert_samples());
-//     EOK
-// }
-
-// fn save<T>(sg: Spectrogram, mut writer: hound::WavWriter<T>) -> EResult
-//     where T: std::io::Write + std::io::Seek
-// {
-//     let mut unshredder = Unshredder::new(sg.clone());
-//     let mut buf = unshredder.allocate_output_buf();
-//     while unshredder.output(&mut buf).unwrap() {
-//         for sample in &buf {
-//             writer.write_sample(SampleConvert::convert(*sample)).unwrap();
-//         };
-//     }
-//     writer.finalize().unwrap();
-//     EOK
-// }

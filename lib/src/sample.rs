@@ -36,3 +36,15 @@ impl SampleConvertTrait<f64, i16> for SampleConvert {
         }
     }
 }
+
+impl SampleConvertTrait<f32, f64> for SampleConvert {
+    fn convert(x: f32) -> f64 {
+        x as f64
+    }
+}
+
+impl SampleConvertTrait<f64, f32> for SampleConvert {
+    fn convert(x: f64) -> f32 {
+        x as f32
+    }
+}

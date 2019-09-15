@@ -9,8 +9,6 @@ use lib::*;
 use lib::shredder::{Shredder,Unshredder};
 use lib::error::*;
 
-mod sample;
-
 #[allow(dead_code)]
 mod control;
 use control::*;
@@ -30,7 +28,7 @@ use edit::*;
 use std::f64;
 use num::complex::Complex;
 use std::f64::consts::PI;
-use sample::{SampleConvert,*};
+use lib::sample::{SampleConvert,*};
 use util::*;
 use std::thread;
 use std::env;
@@ -68,7 +66,7 @@ fn pretty_error(err: &failure::Error) -> String {
 #[allow(unused_variables)]
 fn main2() -> EResult {
     let args: Vec<String> = env::args().collect();
-    let filename = args.get(1).map(|x| x.to_owned()).unwrap_or_else(|| "card.wav".to_owned());
+    let filename = args.get(1).map(|x| x.to_owned()).unwrap_or_else(|| "sounds/card.wav".to_owned());
 
     let reader = hound::WavReader::open(filename).context("reading input wav")?;
     let reader_spec = reader.spec().clone();
@@ -286,7 +284,8 @@ fn save<T>(sg: Spectrogram, mut writer: hound::WavWriter<T>) -> EResult
     let mut buf = unshredder.allocate_output_buf();
     while unshredder.output(&mut buf).unwrap() {
         for sample in &buf {
-            writer.write_sample(SampleConvert::convert(*sample)).unwrap();
+            let sample2: i16 = SampleConvert::convert(*sample);
+            writer.write_sample(sample2).unwrap();
         };
     }
     writer.finalize().unwrap();
