@@ -57,7 +57,7 @@ fn main2() -> EResult {
     };
     let mut shredder = Shredder::new(settings);
 
-    // event_loop.play_stream(input_stream_id.clone())?;
+    event_loop.play_stream(output_stream_id.clone())?; // unclear if this is necessary or works
 
     event_loop.run(move |stream_id, stream_result| {
         let data = match stream_result {
@@ -86,7 +86,6 @@ fn main2() -> EResult {
                 let mut buf = vec![Default::default(); buffer.len()];
                 let have = unshredder.output(&mut shredder.sg, &mut buf).expect("unshredder.output");
                 if have {
-                    println!("{:?}", buf);
                     for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
                         *sample = SampleConvert::convert(buf_sample);
                     }
