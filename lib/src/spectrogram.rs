@@ -24,7 +24,7 @@ pub struct Settings {
 #[derive(Debug, Clone)]
 pub struct Spectrogram {
     pub settings: Settings,
-    data: VecDeque<Column>
+    pub data: VecDeque<Column> // TODO: make data private when done debugging
 }
 
 impl Spectrogram {

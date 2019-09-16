@@ -70,26 +70,28 @@ fn main2() -> EResult {
         match data {
             StreamData::Input{ buffer: cpal::UnknownTypeInputBuffer::F32(buffer) } => {
                 if stream_id != input_stream_id { return }
-                println!("input");
+                println!("+ input {}", buffer.len());
                 let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
                 shredder.append_samples(&converted).expect("processing input samples");
+                println!("  sg size {}", shredder.sg.data.len());
             },
             StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {
                 if stream_id != output_stream_id { return }
-                println!("output");
+                println!("- output {}", buffer.len());
                 if buffer.len() == 0 {
                     println!("skipping empty output buffer");
                     return
                 }
                 let mut unshredder = Unshredder2::new(settings);
-                let mut buf = unshredder.allocate_output_buf(); // xxx you were here. Adapt to unshredder2.
-                let have = unshredder.output(&mut buf).expect("unshredder.output");
+                let mut buf = vec![Default::default(); buffer.len()];
+                let have = unshredder.output(&mut shredder.sg, &mut buf).expect("unshredder.output");
                 if have {
+                    println!("{:?}", buf);
                     for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
                         *sample = SampleConvert::convert(buf_sample);
                     }
                 } else {
-                    println!("no sg data ready")
+                    println!("  no sg data ready")
                 }
             },
             _ => eprintln!("unrecognized stream data"),
