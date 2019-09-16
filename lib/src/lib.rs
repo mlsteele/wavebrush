@@ -1,4 +1,5 @@
 #[macro_use] extern crate failure;
+pub use strider;
 
 pub mod colorramp;
 pub mod error;

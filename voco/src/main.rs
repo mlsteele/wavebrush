@@ -48,16 +48,19 @@ fn main2() -> EResult {
     let output_stream_id = event_loop.build_output_stream(&device_output, &format_output)?;
     println!("event loop");
 
-    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
-    let step_size: usize = window_size / 2;
-    let settings = Settings{
-        sample_rate: format_input.sample_rate.0,
-        window_size: window_size as u32,
-        step_size: step_size as u32,
-    };
-    let mut shredder = Shredder::new(settings);
+    // let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
+    // let step_size: usize = window_size / 2;
+    // let settings = Settings{
+    //     sample_rate: format_input.sample_rate.0,
+    //     window_size: window_size as u32,
+    //     step_size: step_size as u32,
+    // };
+    // let mut shredder = Shredder::new(settings);
 
-    event_loop.play_stream(output_stream_id.clone())?; // unclear if this is necessary or works
+    // event_loop.play_stream(output_stream_id.clone())?; // unclear if this is necessary or works
+    use lib::strider::{self, SliceRing, SliceRingImpl};
+    let mut ring = strider::SliceRingImpl::new();
+    use ::rand;
 
     event_loop.run(move |stream_id, stream_result| {
         let data = match stream_result {
@@ -71,9 +74,10 @@ fn main2() -> EResult {
             StreamData::Input{ buffer: cpal::UnknownTypeInputBuffer::F32(buffer) } => {
                 if stream_id != input_stream_id { return }
                 println!("+ input {}", buffer.len());
-                let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
-                shredder.append_samples(&converted).expect("processing input samples");
-                println!("  sg size {}", shredder.sg.data.len());
+                // let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
+                // shredder.append_samples(&converted).expect("processing input samples");
+                // println!("  sg size {}", shredder.sg.data.len());
+                ring.push_many_back(&buffer);
             },
             StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {
                 if stream_id != output_stream_id { return }
@@ -82,16 +86,17 @@ fn main2() -> EResult {
                     println!("skipping empty output buffer");
                     return
                 }
-                let mut unshredder = Unshredder2::new(settings);
-                let mut buf = vec![Default::default(); buffer.len()];
-                let have = unshredder.output(&mut shredder.sg, &mut buf).expect("unshredder.output");
-                if have {
-                    for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
-                        *sample = SampleConvert::convert(buf_sample);
-                    }
-                } else {
-                    println!("  no sg data ready")
-                }
+                ring.drop_many_front(ring.read_many_front(&mut buffer));
+                // let mut unshredder = Unshredder2::new(settings);
+                // let mut buf = vec![Default::default(); buffer.len()];
+                // let have = unshredder.output(&mut shredder.sg, &mut buf).expect("unshredder.output");
+                // if have {
+                //     for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
+                //         *sample = SampleConvert::convert(buf_sample);
+                //     }
+                // } else {
+                //     println!("  no sg data ready")
+                // }
             },
             _ => eprintln!("unrecognized stream data"),
         }
