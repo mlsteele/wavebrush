@@ -1,12 +1,11 @@
 use crate::spectrogram::*;
 use crate::stft::{STFT, WindowType};
 use crate::error::*;
+use crate::ensure_eq;
 use rustfft::{FFTplanner,FFT};
 use num::complex::Complex;
 use std::sync::Arc;
-use std::collections::vec_deque::VecDeque;
-
-type Column = Vec<Complex<f64>>;
+use strider::{SliceRing, SliceRingImpl};
 
 /// Build a spectrogram from audio samples.
 pub struct Shredder {
@@ -36,62 +35,99 @@ impl Shredder {
 }
 
 /// Output audio from a spectrogram.
+/// Compatibility layer for Unshredder2.
 pub struct Unshredder {
-    settings: Settings,
-    ifft: Arc<dyn FFT<f64>>,
-    src: VecDeque<Column>,
-    buf_overlap: Vec<Complex<f64>>,
-    scratch: Vec<Complex<f64>>,
+    inner: Unshredder2,
+    src: Spectrogram,
 }
 
 impl Unshredder {
     pub fn new(sg: Spectrogram) -> Self {
-        let (settings, src) = sg.explode();
-        let ws = settings.window_size as usize;
-        let overlap_size = ws - settings.step_size as usize;
         Self {
-            settings: settings,
-            ifft: FFTplanner::<f64>::new(true).plan_fft(ws as usize),
-            src: src,
-            buf_overlap: vec![Default::default(); overlap_size],
-            scratch: vec![Default::default(); ws],
+            inner: Unshredder2::new(sg.settings),
+            src: sg,
         }
     }
 
     pub fn output_size(&self) -> usize {
-        self.settings.step_size as usize
+        self.inner.settings.step_size as usize
     }
 
     pub fn allocate_output_buf(&self) -> Vec<f64> {
         vec![Default::default(); self.output_size()]
     }
 
-    fn ws(&self) -> usize { return self.settings.window_size as usize }
-
     /// Output to a buffer of size `self.output_size()`.
     /// Returns whether any output was written.
     /// If false, no more output will ever come.
     pub fn output(&mut self, buf_out: &mut [f64]) -> Result<bool> {
-        ensure!(buf_out.len() == self.output_size(), "output buf size");
-        if let Some(mut column) = self.src.pop_front() {
+        ensure_eq!(buf_out.len(), self.output_size(), "output buf size");
+        self.inner.output(&mut self.src, buf_out)
+    }
+}
+
+/// Output audio from a spectrogram.
+pub struct Unshredder2 {
+    settings: Settings,
+    ifft: Arc<dyn FFT<f64>>,
+    buf_overlap: Vec<Complex<f64>>,
+    scratch: Vec<Complex<f64>>,
+    out_frame: Vec<f64>,
+    out_collector: strider::SliceRingImpl<f64>,
+}
+
+impl Unshredder2 {
+    pub fn new(settings: Settings) -> Self {
+        let ws = settings.window_size as usize;
+        let overlap_size = ws - settings.step_size as usize;
+        Self {
+            settings: settings,
+            ifft: FFTplanner::<f64>::new(true).plan_fft(ws as usize),
+            buf_overlap: vec![Default::default(); overlap_size],
+            scratch: vec![Default::default(); ws],
+            out_frame: vec![Default::default(); settings.step_size as usize],
+            out_collector: SliceRingImpl::with_capacity(settings.step_size as usize),
+        }
+    }
+
+    /// Output a frame if there is enough buffered for one.
+    fn output_frame(&mut self, src: &mut Spectrogram) -> Result<bool> {
+        if let Some(mut column) = src.pop_front() {
+            let ws = self.settings.window_size as usize;
             Self::filter(&mut column);
             self.ifft.process(&mut column, &mut self.scratch);
             // overlap += scratch[..w-s];
-            for i in 0..self.ws()-self.settings.step_size as usize {
+            for i in 0..ws-self.settings.step_size as usize {
                 self.buf_overlap[i] += self.scratch[i];
             }
             // shipit(overlap);
-            for (sample, out) in self.buf_overlap.iter().zip(buf_out.iter_mut()) {
+            for (sample, out) in self.buf_overlap.iter().zip(self.out_frame.iter_mut()) {
                 // The overlap-add of the window at hop-size is equal numerically
                 // to the dc gain of the window divided by the step size.
-                *out = sample.re / self.ws() as f64;
+                *out = sample.re / ws as f64;
             };
+            self.out_collector.push_many_back(&self.out_frame);
             // overlap = scratch[w-s..];
             self.buf_overlap.copy_from_slice(&self.scratch[self.settings.step_size as usize..]);
             Ok(true)
         } else {
             Ok(false)
         }
+    }
+
+    /// Output audio samples to a buffer (of any size).
+    /// Returns whether output was written.
+    pub fn output(&mut self, src: &mut Spectrogram, buf_out: &mut [f64]) -> Result<bool> {
+        while self.out_collector.len() < buf_out.len() {
+            if !(self.output_frame(src)?) {
+                // Not enough data to fill buf_out.
+                return Ok(false);
+            }
+        }
+        let n_read = self.out_collector.read_many_front(buf_out);
+        assert_eq!(n_read, buf_out.len(), "unshredder ringer buffer output");
+        self.out_collector.drop_many_front(n_read);
+        Ok(true)
     }
 
     /// For corrupting the signal.

@@ -5,7 +5,7 @@ use lib::spectrogram::*;
 use lib::shredder::*;
 use lib::sample::{SampleConvert,*};
 
-use cpal::{Host, Device, Format, StreamData, UnknownTypeInputBuffer};
+use cpal::{Host, Device, Format, StreamData};
 use cpal::traits::{DeviceTrait,HostTrait,EventLoopTrait};
 
 fn main() {
@@ -77,15 +77,19 @@ fn main2() -> EResult {
             StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {
                 if stream_id != output_stream_id { return }
                 println!("output");
-                if let Some(column) = shredder.sg.pop_front() {
-                    let mut sg = Spectrogram::new(settings);
-                    sg.push_back(column).expect("sg.push_back");
-                    let mut unshredder = Unshredder::new(sg);
-                    let mut buf = Vec::with_capacity(buffer.len());
-                    unshredder.output(&mut buf).expect("unshredder.output");
+                if buffer.len() == 0 {
+                    println!("skipping empty output buffer");
+                    return
+                }
+                let mut unshredder = Unshredder2::new(settings);
+                let mut buf = unshredder.allocate_output_buf(); // xxx you were here. Adapt to unshredder2.
+                let have = unshredder.output(&mut buf).expect("unshredder.output");
+                if have {
                     for (sample, buf_sample) in buffer.iter_mut().zip(buf) {
                         *sample = SampleConvert::convert(buf_sample);
                     }
+                } else {
+                    println!("no sg data ready")
                 }
             },
             _ => eprintln!("unrecognized stream data"),

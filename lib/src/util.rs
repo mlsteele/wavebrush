@@ -28,7 +28,7 @@ pub fn rad_clock(radians: f64) -> char {
         let va = $a;
         let vb = $b;
         if va != vb {
-            bail!("assertion failed: {}: [{} == {}] [{} == {}]", $desc, va, vb, stringify!($a), stringify!($b));
+            bail!("assertion failed: {}: [{} != {}] [{} != {}]", $desc, va, vb, stringify!($a), stringify!($b));
         }
     )
 }
