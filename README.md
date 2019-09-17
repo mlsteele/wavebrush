@@ -37,3 +37,5 @@ Painting on spectrograms.
 - http://www.cs.princeton.edu/~fiebrink/314/2009/week12/FFT_handout.pdf "hop size can be" small
 - https://ccrma.stanford.edu/~jos/parshl/Choice_Hop_Size.html
 - http://recherche.ircam.fr/anasyn/roebel/amt_audiosignale/VL2.pdf
+- https://en.wikipedia.org/wiki/Constant-Q_transform
+- https://www.youtube.com/watch?v=Cl-m4X3rwac (Fast Fourier Transform and Constant Q Explanation)
