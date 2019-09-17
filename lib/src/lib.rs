@@ -1,4 +1,5 @@
 #[macro_use] extern crate failure;
+#[macro_use] extern crate itertools;
 pub use strider;
 
 pub mod colorramp;

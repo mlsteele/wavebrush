@@ -48,7 +48,7 @@ fn main2() -> EResult {
     let output_stream_id = event_loop.build_output_stream(&device_output, &format_output)?;
     println!("event loop");
 
-    let window_size: usize = (2 as usize).pow(14); // When this isn't a power of two garbage comes out.
+    let window_size: usize = (2 as usize).pow(16); // When this isn't a power of two garbage comes out.
     let step_size: usize = window_size / 2;
     let settings = Settings{
         sample_rate: format_input.sample_rate.0,
@@ -72,7 +72,11 @@ fn main2() -> EResult {
             StreamData::Input{ buffer: cpal::UnknownTypeInputBuffer::F32(buffer) } => {
                 if stream_id != input_stream_id { return }
                 // println!("+ input {}", buffer.len());
-                let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
+                let mut converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
+                // // Overlay white noise.
+                // for sample in converted.iter_mut() {
+                //     *sample += (rand::random::<f64>() - 0.5) * 0.2;
+                // }
                 shredder.append_samples(&converted).expect("processing input samples");
             },
             StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {

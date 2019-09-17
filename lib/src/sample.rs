@@ -26,6 +26,16 @@ impl SampleConvertTrait<i16, f64> for SampleConvert {
     }
 }
 
+impl SampleConvertTrait<i16, f32> for SampleConvert {
+    fn convert(x: i16) -> f32 {
+        match x as f32 / std::i16::MAX as f32 {
+            y if y > 1. => 1.,
+            y if y < -1. => -1.,
+            y => y,
+        }
+    }
+}
+
 impl SampleConvertTrait<f64, i16> for SampleConvert {
     fn convert(x: f64) -> i16 {
         let max = std::i16::MAX;

@@ -7,6 +7,7 @@ use num::complex::Complex;
 use std::sync::Arc;
 use strider::{SliceRing, SliceRingImpl};
 use crate::util::*;
+use std::f64::consts::PI;
 
 /// Build a spectrogram from audio samples.
 pub struct Shredder {
@@ -145,13 +146,30 @@ impl Unshredder2 {
         //     *sample = Complex::from_polar(&r, &theta);
         // }
 
-        println!("counter {}", self.counter);
-        for (y, sample) in column.iter_mut().enumerate() {
-            let freq = fft_freq(y, self.settings.sample_rate as usize, self.settings.window_size as usize);
-            let target_freq = 300. + (self.counter % 20) as f64 * 5.;
-            let (mut r, mut theta) = sample.to_polar();
-            r /= 1. + ((freq - target_freq).abs() / 50.);
-            *sample = Complex::from_polar(&r, &theta);
+        // let column_len = column.len();
+        // for (i, sample) in column.iter_mut().enumerate() {
+        //     let (mut r, mut theta) = sample.to_polar();
+        //     theta += (column_len as f64 / 2. - i as f64).sin() * PI / 2.;
+        //     *sample = Complex::from_polar(&r, &theta);
+        // }
+
+        for sample in column.iter_mut() {
+            sample.re *= sample.im;
         }
+
+        // println!("counter {}", self.counter);
+        // for (y, sample) in column.iter_mut().enumerate() {
+        //     let freq = fft_freq(y, self.settings.sample_rate as usize, self.settings.window_size as usize);
+        //     let (mut r, mut theta) = sample.to_polar();
+        //     let mid_freqs = [200., 400., 700., 1300.];
+        //     let widths = [100., 200., 300., 400.];
+        //     let speeds = [1., 0.3, 0.8, 0.2];
+        //     for (mid_freq, width, speed) in izip!(mid_freqs.iter(), widths.iter(), speeds.iter()) {
+        //         let target_freq = mid_freq + (self.counter as f64 * speed).sin() * width;
+        //         r /= 1. + ((freq - target_freq).abs() / 1000.);
+        //     }
+        //     *sample = Complex::from_polar(&r, &theta);
+        // }
+
     }
 }

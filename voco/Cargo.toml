@@ -10,5 +10,6 @@ edition = "2018"
 cpal = "0.10.0"
 failure = "0.1.5"
 rodio = "0.8.1"
+rand = "0.7.2"
 
 lib = { path = "../lib" }
