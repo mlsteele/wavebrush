@@ -6,6 +6,7 @@ use rustfft::{FFTplanner,FFT};
 use num::complex::Complex;
 use std::sync::Arc;
 use strider::{SliceRing, SliceRingImpl};
+use crate::util::*;
 
 /// Build a spectrogram from audio samples.
 pub struct Shredder {
@@ -72,6 +73,7 @@ pub struct Unshredder2 {
     ifft: Arc<dyn FFT<f64>>,
     buf_overlap: Vec<Complex<f64>>,
     scratch: Vec<Complex<f64>>,
+    counter: usize,
     out_frame: Vec<f64>,
     out_collector: strider::SliceRingImpl<f64>,
 }
@@ -85,6 +87,7 @@ impl Unshredder2 {
             ifft: FFTplanner::<f64>::new(true).plan_fft(ws as usize),
             buf_overlap: vec![Default::default(); overlap_size],
             scratch: vec![Default::default(); ws],
+            counter: 0,
             out_frame: vec![Default::default(); settings.step_size as usize],
             out_collector: SliceRingImpl::with_capacity(settings.step_size as usize),
         }
@@ -94,7 +97,8 @@ impl Unshredder2 {
     fn output_frame(&mut self, src: &mut Spectrogram) -> Result<bool> {
         if let Some(mut column) = src.pop_front() {
             let ws = self.settings.window_size as usize;
-            Self::filter(&mut column);
+            self.filter(&mut column);
+            self.counter += 1;
             self.ifft.process(&mut column, &mut self.scratch);
             // overlap += scratch[..w-s];
             for i in 0..ws-self.settings.step_size as usize {
@@ -131,13 +135,23 @@ impl Unshredder2 {
     }
 
     /// For corrupting the signal.
-    fn filter(column: &mut [Complex<f64>]) {
+    fn filter(&self, column: &mut [Complex<f64>]) {
         let _ = column;
-        // Lose phase information
+
+        // // Lose phase information
         // for sample in column.iter_mut() {
         //     let (mut r, mut theta) = sample.to_polar();
         //     theta = 0.;
         //     *sample = Complex::from_polar(&r, &theta);
         // }
+
+        println!("counter {}", self.counter);
+        for (y, sample) in column.iter_mut().enumerate() {
+            let freq = fft_freq(y, self.settings.sample_rate as usize, self.settings.window_size as usize);
+            let target_freq = 300. + (self.counter % 20) as f64 * 5.;
+            let (mut r, mut theta) = sample.to_polar();
+            r /= 1. + ((freq - target_freq).abs() / 50.);
+            *sample = Complex::from_polar(&r, &theta);
+        }
     }
 }

@@ -71,14 +71,13 @@ fn main2() -> EResult {
         match data {
             StreamData::Input{ buffer: cpal::UnknownTypeInputBuffer::F32(buffer) } => {
                 if stream_id != input_stream_id { return }
-                println!("+ input {}", buffer.len());
+                // println!("+ input {}", buffer.len());
                 let converted: Vec<f64> = buffer.iter().map(|x| SampleConvert::convert(*x)).collect();
                 shredder.append_samples(&converted).expect("processing input samples");
-                println!("  sg size {}", shredder.sg.data.len());
             },
             StreamData::Output{ buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer) } => {
                 if stream_id != output_stream_id { return }
-                println!("- output {}", buffer.len());
+                // println!("- output {}", buffer.len());
                 if buffer.len() == 0 {
                     println!("skipping empty output buffer");
                     return
